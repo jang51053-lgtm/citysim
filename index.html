@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CivicCanvas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; background-color: #1a1a2e; user-select: none; }
+        canvas { display: block; touch-action: none; }
+        .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .tool-btn, .cat-btn { transition: all 0.2s ease; }
+        .tool-btn:hover, .cat-btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.1); }
+        .tool-btn.active, .cat-btn.active { background: rgba(59, 130, 246, 0.5); border-color: rgba(96, 165, 250, 1); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+        .submenu-container { transition: opacity 0.2s, transform 0.2s; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .toast-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="text-white">
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="absolute top-0 left-0 right-0 p-4 pointer-events-none flex justify-between items-start z-10">
+        <div class="glass-panel rounded-xl p-4 pointer-events-auto flex flex-wrap gap-6 shadow-lg items-center">
+            <div>
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">자금</div>
+                <div class="text-xl font-bold text-green-400" id="ui-money">$4,000</div>
+                <div class="text-[10px] text-gray-400" id="ui-income">+$0 /월</div>
+            </div>
+            <div class="w-px h-8 bg-white/10 hidden sm:block"></div>
+            <div class="hidden sm:block">
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">인구</div>
+                <div class="text-lg font-bold text-blue-400" id="ui-population">0</div>
+            </div>
+            <div class="w-px h-8 bg-white/10 hidden md:block"></div>
+            <div class="hidden md:block">
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">전력</div>
+                <div class="text-sm font-bold text-yellow-400"><span id="ui-power-used">0</span> / <span id="ui-power-cap">0</span></div>
+            </div>
+            <div class="w-px h-8 bg-white/10 hidden md:block"></div>
+            <div class="hidden md:block">
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">수도</div>
+                <div class="text-sm font-bold text-blue-300"><span id="ui-water-used">0</span> / <span id="ui-water-cap">0</span></div>
+            </div>
+            <div class="w-px h-8 bg-white/10 hidden md:block"></div>
+            <div class="hidden md:block">
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">행복도</div>
+                <div class="text-lg font-bold text-pink-400" id="ui-happiness">0%</div>
+            </div>
+            <div class="w-px h-8 bg-white/10 hidden md:block"></div>
+            <div class="hidden md:block">
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">날짜</div>
+                <div class="text-lg font-bold text-white" id="ui-date">1년 1월</div>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-end gap-2 pointer-events-auto">
+            <button id="restart-btn" class="glass-panel text-red-400 px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border-red-400/30 hover:border-red-500/60">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                다시 시작
+            </button>
+            <div class="glass-panel rounded-xl p-3 w-36 shadow-lg hidden sm:block">
+                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">수요</div>
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-3 h-3 rounded bg-green-500"></div><div class="flex-1 bg-gray-700 h-1.5 rounded overflow-hidden"><div id="demand-r" class="bg-green-500 h-full transition-all duration-300" style="width: 50%"></div></div>
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-3 h-3 rounded bg-blue-500"></div><div class="flex-1 bg-gray-700 h-1.5 rounded overflow-hidden"><div id="demand-c" class="bg-blue-500 h-full transition-all duration-300" style="width: 50%"></div></div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded bg-yellow-500"></div><div class="flex-1 bg-gray-700 h-1.5 rounded overflow-hidden"><div id="demand-i" class="bg-yellow-500 h-full transition-all duration-300" style="width: 50%"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="absolute bottom-6 left-0 right-0 pointer-events-none flex flex-col items-center z-10 gap-2">
+        <div class="pointer-events-auto flex gap-2">
+            <button id="toggle-wires-btn" class="glass-panel text-white px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border-yellow-400/30">
+                <span id="toggle-wires-icon">⚡</span> <span id="toggle-wires-text">전력망 보기</span>
+            </button>
+            <button id="toggle-pipes-btn" class="glass-panel text-white px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border-blue-400/30">
+                <span id="toggle-pipes-icon">💧</span> <span id="toggle-pipes-text">수도망 보기</span>
+            </button>
+        </div>
+
+        <div id="submenu-infra" class="submenu-container hidden glass-panel rounded-xl p-2 pointer-events-auto flex gap-2 shadow-lg mb-1">
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="ROAD"><div class="text-sm mb-1">🛣️</div><span class="text-[9px]">도로 ($10)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="WIRE"><div class="text-sm mb-1">⚡</div><span class="text-[9px]">전선 ($5)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="POWER"><div class="text-sm mb-1">🏭</div><span class="text-[9px]">발전소 ($500)</span></button>
+            <div class="w-px bg-white/10 my-1"></div>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="WATER"><div class="text-sm mb-1">💧</div><span class="text-[9px]">수원 ($10)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="PIPE"><div class="text-sm mb-1">🚰</div><span class="text-[9px]">파이프 ($5)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="PUMP"><div class="text-sm mb-1">🏗️</div><span class="text-[9px]">정수장 ($200)</span></button>
+        </div>
+
+        <div id="submenu-zone" class="submenu-container hidden glass-panel rounded-xl p-2 pointer-events-auto flex gap-2 shadow-lg mb-1">
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="RESIDENTIAL"><div class="w-4 h-4 mb-1 bg-green-500 rounded"></div><span class="text-[9px]">주거 ($50)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="COMMERCIAL"><div class="w-4 h-4 mb-1 bg-blue-500 rounded"></div><span class="text-[9px]">상업 ($50)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="INDUSTRIAL"><div class="w-4 h-4 mb-1 bg-yellow-500 rounded"></div><span class="text-[9px]">공업 ($50)</span></button>
+            <div class="w-px bg-white/10 my-1"></div>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="ENTERTAIN"><div class="text-sm mb-1">🎡</div><span class="text-[9px]">오락 ($100)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="FOREST"><div class="text-sm mb-1">🌳</div><span class="text-[9px]">숲 ($10)</span></button>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-2 pointer-events-auto flex gap-2 shadow-2xl overflow-x-auto max-w-[95vw]">
+            <button class="tool-btn active flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-tool="SELECT"><div class="text-lg mb-1">🔍</div><span class="text-[10px] font-medium">조사</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-tool="TRAFFIC"><div class="text-lg mb-1">🚦</div><span class="text-[10px] font-medium">교통정리</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-tool="INVEST"><div class="text-lg mb-1">📈</div><span class="text-[10px] font-medium">투자</span></button>
+            <div class="w-px bg-white/10 my-1"></div>
+            <button class="cat-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-cat="infra"><div class="text-lg mb-1">🏗️</div><span class="text-[10px] font-medium">인프라 ▴</span></button>
+            <button class="cat-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-cat="zone"><div class="text-lg mb-1">🏠</div><span class="text-[10px] font-medium">부지건설 ▴</span></button>
+            <div class="w-px bg-white/10 my-1"></div>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent hover:bg-red-500/20" data-tool="BULLDOZE"><div class="text-lg mb-1">💣</div><span class="text-[10px] font-medium text-red-400">철거</span></button>
+        </div>
+    </div>
+
+    <div id="inspector-panel" class="absolute hidden glass-panel rounded-xl p-4 pointer-events-auto shadow-lg text-sm w-48 z-20">
+        <h3 id="insp-title" class="font-bold text-white mb-2 border-b border-white/20 pb-1">빈 타일</h3>
+        <div id="insp-warnings" class="mb-2 hidden flex flex-col gap-1"></div>
+        <div class="space-y-1 text-gray-300">
+            <div class="flex justify-between"><span class="text-gray-400">전력:</span> <span id="insp-power">없음</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">수도:</span> <span id="insp-water">없음</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">레벨:</span> <span id="insp-level">-</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">인구/일자리:</span> <span id="insp-density">-</span></div>
+        </div>
+        <button id="insp-upgrade" class="mt-3 w-full py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 rounded text-xs transition border border-yellow-500/50 hidden">용량 업그레이드 ($1,000)</button>
+        <button id="insp-close" class="mt-2 w-full py-1.5 bg-white/10 hover:bg-white/20 rounded text-xs transition">닫기</button>
+    </div>
+
+    <div id="toast-container" class="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex flex-col items-center pointer-events-none z-50"></div>
+
+    <script>
+        const CANVAS = document.getElementById('gameCanvas');
+        const CTX = CANVAS.getContext('2d', { alpha: false });
+        
+        const TILE_SIZE = 40; const GRID_WIDTH = 40; const GRID_HEIGHT = 40;
+        const WORLD_WIDTH = TILE_SIZE * GRID_WIDTH; const WORLD_HEIGHT = TILE_SIZE * GRID_HEIGHT;
+        const DIRS = [[0,1], [1,0], [0,-1], [-1,0]]; // E, S, W, N
+
+        const TYPES = {
+            EMPTY: 'EMPTY', ROAD: 'ROAD', WIRE: 'WIRE', PIPE: 'PIPE', WATER: 'WATER', PUMP: 'PUMP',
+            RESIDENTIAL: 'RESIDENTIAL', COMMERCIAL: 'COMMERCIAL', INDUSTRIAL: 'INDUSTRIAL', POWER: 'POWER', ENTERTAIN: 'ENTERTAIN', FOREST: 'FOREST'
+        };
+
+        const COSTS = { ROAD: 10, WIRE: 5, PIPE: 5, WATER: 10, PUMP: 200, RESIDENTIAL: 50, COMMERCIAL: 50, INDUSTRIAL: 50, POWER: 500, ENTERTAIN: 100, FOREST: 10, BULLDOZE: 5, UPGRADE: 1000, TRAFFIC: 0, INVEST: 500 };
+
+        const gameState = {
+            grid: [], wires: [], pipes: [],
+            money: 4000, population: 0, happiness: 0,
+            powerCapacity: 0, powerUsed: 0, waterCapacity: 0, waterUsed: 0,
+            month: 1, year: 1, lastTickTime: 0, tickInterval: 1000, dayCounter: 0, lastIncome: 0, monthlyRevenue: 0,
+            
+            camera: { x: 0, y: 0, zoom: 1, isDragging: false, lastMouseX: 0, lastMouseY: 0 },
+            currentTool: 'SELECT', isPainting: false, potentialDrag: false,
+            hoverX: -1, hoverY: -1, wireStart: null, pipeStart: null,
+            showWires: false, showPipes: false,
+            demand: { R: 60, C: 20, I: 20 },
+            particles: [], cars: []
+        };
+
+        let congestionMap = new Map();
+        let floatingTexts = [];
+
+        function initGrid() {
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                let row = [];
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    row.push({
+                        type: TYPES.EMPTY, isZoned: false, level: 0, age: 0,
+                        powered: false, powerSource: false, watered: false, waterSource: false,
+                        density: 0, hasTree: Math.random() < 0.15, treeType: Math.floor(Math.random() * 3),
+                        carArrivals: 0
+                    });
+                }
+                gameState.grid.push(row);
+            }
+            gameState.camera.x = WORLD_WIDTH / 2 - window.innerWidth / 2;
+            gameState.camera.y = WORLD_HEIGHT / 2 - window.innerHeight / 2;
+        }
+
+        function setupEvents() {
+            window.addEventListener('resize', resizeCanvas);
+            
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetMenu = document.getElementById(`submenu-${btn.dataset.cat}`);
+                    const isHidden = targetMenu.classList.contains('hidden');
+                    document.querySelectorAll('.submenu-container').forEach(menu => menu.classList.add('hidden'));
+                    document.querySelectorAll('.cat-btn').forEach(c => c.classList.remove('bg-white/20'));
+                    if (isHidden) { targetMenu.classList.remove('hidden'); btn.classList.add('bg-white/20'); }
+                });
+            });
+
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.currentTool = btn.dataset.tool;
+                    gameState.wireStart = null; gameState.pipeStart = null;
+                    
+                    if (['ROAD', 'WIRE', 'POWER'].includes(gameState.currentTool)) { gameState.showWires = true; gameState.showPipes = false; }
+                    else if (['WATER', 'PIPE', 'PUMP'].includes(gameState.currentTool)) { gameState.showPipes = true; gameState.showWires = false; }
+                    else { gameState.showWires = false; gameState.showPipes = false; }
+                    updateToggleButtonsUI(); hideInspector();
+                });
+            });
+
+            document.getElementById('insp-close').addEventListener('click', hideInspector);
+            document.getElementById('toggle-wires-btn').addEventListener('click', () => { gameState.showWires = !gameState.showWires; if(gameState.showWires) gameState.showPipes = false; updateToggleButtonsUI(); });
+            document.getElementById('toggle-pipes-btn').addEventListener('click', () => { gameState.showPipes = !gameState.showPipes; if(gameState.showPipes) gameState.showWires = false; updateToggleButtonsUI(); });
+
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                if (confirm("정말 도시를 초기화하고 처음부터 다시 시작하시겠습니까?")) {
+                    gameState.grid = []; gameState.wires = []; gameState.pipes = [];
+                    gameState.money = 4000; gameState.population = 0; gameState.happiness = 0;
+                    gameState.powerCapacity = 0; gameState.powerUsed = 0; gameState.waterCapacity = 0; gameState.waterUsed = 0;
+                    gameState.month = 1; gameState.year = 1; gameState.dayCounter = 0; gameState.lastIncome = 0; gameState.monthlyRevenue = 0;
+                    gameState.cars = []; gameState.particles = [];
+                    initGrid(); updateHUD(); updateDemands(); hideInspector();
+                    showToast("도시가 성공적으로 초기화되었습니다.", "info");
+                }
+            });
+
+            CANVAS.addEventListener('mousedown', handleMouseDown); CANVAS.addEventListener('mousemove', handleMouseMove);
+            CANVAS.addEventListener('mouseup', handleMouseUp);
+            CANVAS.addEventListener('mouseleave', () => { gameState.camera.isDragging = false; gameState.isPainting = false; gameState.potentialDrag = false; gameState.hoverX = -1; gameState.hoverY = -1; });
+            CANVAS.addEventListener('touchstart', (e) => { e.preventDefault(); handleMouseDown({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY, button: 0 }); }, { passive: false });
+            CANVAS.addEventListener('touchmove', (e) => { e.preventDefault(); handleMouseMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }); }, { passive: false });
+            CANVAS.addEventListener('touchend', (e) => { e.preventDefault(); handleMouseUp(e); }, { passive: false });
+        }
+
+        function updateToggleButtonsUI() {
+            const wBtn = document.getElementById('toggle-wires-btn'); const pBtn = document.getElementById('toggle-pipes-btn');
+            if (gameState.showWires) { wBtn.classList.add('bg-yellow-500/30', 'border-yellow-400'); wBtn.classList.remove('border-yellow-400/30'); } else { wBtn.classList.remove('bg-yellow-500/30', 'border-yellow-400'); wBtn.classList.add('border-yellow-400/30'); }
+            if (gameState.showPipes) { pBtn.classList.add('bg-blue-500/30', 'border-blue-400'); pBtn.classList.remove('border-blue-400/30'); } else { pBtn.classList.remove('bg-blue-500/30', 'border-blue-400'); pBtn.classList.add('border-blue-400/30'); }
+        }
+
+        function resizeCanvas() { CANVAS.width = window.innerWidth; CANVAS.height = window.innerHeight; draw(); }
+
+        function screenToWorld(screenX, screenY) { return { x: (screenX / gameState.camera.zoom) + gameState.camera.x, y: (screenY / gameState.camera.zoom) + gameState.camera.y }; }
+        function getTileAtScreen(screenX, screenY) {
+            const w = screenToWorld(screenX, screenY);
+            const gx = Math.floor(w.x / TILE_SIZE), gy = Math.floor(w.y / TILE_SIZE);
+            if (gx >= 0 && gx < GRID_WIDTH && gy >= 0 && gy < GRID_HEIGHT) return { x: gx, y: gy }; return null;
+        }
+
+        function handleMouseDown(e) {
+            if (e.button === 2 || ['SELECT', 'TRAFFIC'].includes(gameState.currentTool)) {
+                gameState.potentialDrag = true; gameState.camera.lastMouseX = e.clientX; gameState.camera.lastMouseY = e.clientY;
+            } else if (e.button === 0) { gameState.isPainting = true; applyTool(e.clientX, e.clientY, true); }
+        }
+
+        function handleMouseMove(e) {
+            const t = getTileAtScreen(e.clientX, e.clientY);
+            if (t) { gameState.hoverX = t.x; gameState.hoverY = t.y; } else { gameState.hoverX = -1; gameState.hoverY = -1; }
+
+            if (gameState.potentialDrag) {
+                const dx = e.clientX - gameState.camera.lastMouseX; const dy = e.clientY - gameState.camera.lastMouseY;
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) { gameState.camera.isDragging = true; gameState.potentialDrag = false; hideInspector(); }
+            }
+
+            if (gameState.camera.isDragging) {
+                const dx = e.clientX - gameState.camera.lastMouseX; const dy = e.clientY - gameState.camera.lastMouseY;
+                gameState.camera.x -= dx / gameState.camera.zoom; gameState.camera.y -= dy / gameState.camera.zoom;
+                gameState.camera.x = Math.max(0, Math.min(gameState.camera.x, WORLD_WIDTH - CANVAS.width / gameState.camera.zoom));
+                gameState.camera.y = Math.max(0, Math.min(gameState.camera.y, WORLD_HEIGHT - CANVAS.height / gameState.camera.zoom));
+                gameState.camera.lastMouseX = e.clientX; gameState.camera.lastMouseY = e.clientY;
+            } else if (gameState.isPainting && !gameState.camera.isDragging) { applyTool(e.clientX, e.clientY, false); }
+        }
+
+        function handleMouseUp(e) { 
+            if (gameState.potentialDrag && !gameState.camera.isDragging) {
+                let cx = 0, cy = 0;
+                if (e && e.changedTouches && e.changedTouches.length > 0) { cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY; } 
+                else if (e && e.clientX !== undefined) { cx = e.clientX; cy = e.clientY; } 
+                else { cx = (gameState.hoverX * TILE_SIZE - gameState.camera.x) * gameState.camera.zoom; cy = (gameState.hoverY * TILE_SIZE - gameState.camera.y) * gameState.camera.zoom; }
+                
+                if (gameState.currentTool === 'SELECT') { if (gameState.hoverX >= 0) showInspector(gameState.hoverX, gameState.hoverY, cx, cy); } 
+                else if (gameState.currentTool === 'TRAFFIC') { if (gameState.hoverX >= 0) applyTool(cx, cy, true); }
+            }
+            gameState.camera.isDragging = false; gameState.potentialDrag = false; gameState.isPainting = false; 
+        }
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        function applyTool(screenX, screenY, isClick) {
+            const tileCoords = getTileAtScreen(screenX, screenY); if (!tileCoords) return;
+            const x = tileCoords.x, y = tileCoords.y; const tile = gameState.grid[y][x]; const tool = gameState.currentTool;
+
+            if (tool === 'TRAFFIC' && isClick) {
+                createFloatingText("🚦 소통 원활!", x * TILE_SIZE, y * TILE_SIZE, '#4ade80');
+                for (let c of gameState.cars) { if (Math.floor(c.x/TILE_SIZE) === x && Math.floor(c.y/TILE_SIZE) === y) { c.currentSpeed = c.baseSpeed * 2.5; c.ignoreCol = true; } }
+                setTimeout(() => { for(let c of gameState.cars) c.ignoreCol = false; }, 2000);
+                return;
+            }
+
+            if (tool === 'INVEST' && isClick) {
+                if (tile.isZoned && tile.level > 0 && tile.level < 4) {
+                    if (spendMoney(COSTS.INVEST, screenX, screenY)) {
+                        tile.level++; tile.density = tile.level * 10;
+                        createParticles(x*TILE_SIZE+TILE_SIZE/2, y*TILE_SIZE+TILE_SIZE/2, '#4ade80', 20);
+                        createFloatingText("🚀 레벨업!", x * TILE_SIZE, y * TILE_SIZE, '#4ade80');
+                        calculatePopulation(); updatePowerGrid(); updateWaterGrid(); updateDemands();
+                    }
+                } else if(tile.type === TYPES.ENTERTAIN && tile.level > 0 && tile.level < 3) {
+                    if (spendMoney(COSTS.INVEST, screenX, screenY)) {
+                        tile.level++;
+                        createParticles(x*TILE_SIZE+TILE_SIZE/2, y*TILE_SIZE+TILE_SIZE/2, '#fb7185', 20);
+                        createFloatingText("🎢 확장 완료!", x * TILE_SIZE, y * TILE_SIZE, '#fb7185');
+                        updatePowerGrid(); updateWaterGrid(); updateDemands();
+                    }
+                } else showToast("최고 레벨이거나 투자할 수 없습니다.", "info");
+                return;
+            }
+
+            if (tool === 'WIRE' || tool === 'PIPE') {
+                let start = tool === 'WIRE' ? gameState.wireStart : gameState.pipeStart;
+                if (isClick) {
+                    if (!start) { if(tool==='WIRE') gameState.wireStart={x,y}; else gameState.pipeStart={x,y}; }
+                    else {
+                        if (start.x !== x || start.y !== y) {
+                            if (spendMoney(COSTS[tool], screenX, screenY)) {
+                                if(tool==='WIRE') { gameState.wires.push({ x1: start.x, y1: start.y, x2: x, y2: y }); updatePowerGrid(); }
+                                else { gameState.pipes.push({ x1: start.x, y1: start.y, x2: x, y2: y }); updateWaterGrid(); }
+                            }
+                        }
+                        if(tool==='WIRE') gameState.wireStart=null; else gameState.pipeStart=null;
+                    }
+                }
+                return;
+            }
+
+            if (tool === 'BULLDOZE') {
+                if (tile.type !== TYPES.EMPTY || tile.hasTree) {
+                    if (spendMoney(COSTS.BULLDOZE, screenX, screenY)) {
+                        createParticles(x*TILE_SIZE+TILE_SIZE/2, y*TILE_SIZE+TILE_SIZE/2, '#888', 10);
+                        tile.type = TYPES.EMPTY; tile.isZoned = false; tile.level = 0; tile.density = 0; tile.hasTree = false; tile.powerSource = false; tile.waterSource = false;
+                        gameState.wires = gameState.wires.filter(w => !((w.x1 === x && w.y1 === y) || (w.x2 === x && w.y2 === y)));
+                        gameState.pipes = gameState.pipes.filter(p => !((p.x1 === x && p.y1 === y) || (p.x2 === x && p.y2 === y)));
+                        updatePowerGrid(); updateWaterGrid(); calculatePopulation(); updateDemands();
+                    }
+                }
+                return;
+            }
+
+            if (tile.type !== TYPES.EMPTY) return;
+            if (tile.hasTree && tool !== 'FOREST') tile.hasTree = false;
+
+            if (tool === 'FOREST') { if(!tile.hasTree && spendMoney(COSTS.FOREST, screenX, screenY)) { tile.hasTree = true; tile.treeType = Math.floor(Math.random()*3); updateDemands(); } }
+            else if (['ROAD', 'WATER'].includes(tool)) { if (spendMoney(COSTS[tool], screenX, screenY)) tile.type = TYPES[tool]; }
+            else if (['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'ENTERTAIN'].includes(tool)) {
+                if (spendMoney(COSTS[tool], screenX, screenY)) {
+                    tile.type = TYPES[tool]; tile.isZoned = tool !== 'ENTERTAIN'; tile.level = 0; tile.age = 0;
+                    if(tool === 'ENTERTAIN') { tile.level = 1; updateDemands(); }
+                    updatePowerGrid(); updateWaterGrid(); 
+                }
+            } else if (tool === 'POWER' || tool === 'PUMP') {
+                if (spendMoney(COSTS[tool], screenX, screenY)) {
+                    tile.type = TYPES[tool]; tile.level = 1;
+                    if(tool==='POWER') tile.powerSource = true; else tile.waterSource = true;
+                    updatePowerGrid(); updateWaterGrid();
+                }
+            }
+        }
+
+        function spendMoney(amount, screenX, screenY) {
+            if (gameState.money >= amount) {
+                gameState.money -= amount; updateHUD();
+                const wc = screenToWorld(screenX, screenY); createFloatingText(`-$${amount}`, wc.x, wc.y, '#ef4444'); return true;
+            } else { showToast("자금이 부족합니다!", "error"); return false; }
+        }
+
+        function showToast(msg, type="info") {
+            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
+            toast.className = `${type === "error" ? "bg-red-500" : "bg-blue-500"} text-white px-4 py-2 rounded shadow-lg text-sm mb-2 toast-enter font-medium`;
+            toast.innerText = msg; container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 2000);
+        }
+
+        function updatePowerGrid() {
+            let capacity = 0, used = 0; let sources = [];
+            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                let t = gameState.grid[y][x]; t.powered = false;
+                if (t.powerSource && t.level > 0) { capacity += t.level === 1 ? 15 : 30; sources.push({x, y}); t.powered = true; }
+            }
+            let available = capacity;
+            if (sources.length > 0 && available > 0) {
+                let q = [...sources]; let visited = new Set(sources.map(p => `${p.x},${p.y}`)); let head = 0;
+                while (head < q.length && available > 0) {
+                    let curr = q[head++]; let tile = gameState.grid[curr.y][curr.x];
+                    if ((tile.isZoned || tile.type === TYPES.ENTERTAIN) && tile.level > 0 && !tile.powerSource) {
+                        let cost = tile.level === 4 ? 3 : (tile.level === 3 ? 2 : 1);
+                        if (available >= cost) { available -= cost; used += cost; tile.powered = true; } else { tile.powered = false; continue; }
+                    } else tile.powered = true;
+                    
+                    for (let w of gameState.wires) {
+                        let next = null; if (w.x1 === curr.x && w.y1 === curr.y) next = {x: w.x2, y: w.y2}; else if (w.x2 === curr.x && w.y2 === curr.y) next = {x: w.x1, y: w.y1};
+                        if (next) { let k = `${next.x},${next.y}`; if (!visited.has(k)) { visited.add(k); q.push(next); } }
+                    }
+                    for (let d of DIRS) {
+                        let nx = curr.x + d[0], ny = curr.y + d[1];
+                        if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
+                            let adj = gameState.grid[ny][nx];
+                            if (adj.isZoned || adj.powerSource || adj.type === TYPES.ENTERTAIN) {
+                                let k = `${nx},${ny}`; if (!visited.has(k)) { visited.add(k); q.push({x: nx, y: ny}); }
+                            }
+                        }
+                    }
+                }
+            }
+            gameState.powerCapacity = capacity; gameState.powerUsed = used;
+        }
+
+        function updateWaterGrid() {
+            let capacity = 0, used = 0; let sources = [];
+            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                let t = gameState.grid[y][x]; t.watered = false;
+                if (t.type === TYPES.PUMP && t.level > 0) {
+                    let hasWater = false;
+                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+                        let nx=x+dx, ny=y+dy; if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT && gameState.grid[ny][nx].type === TYPES.WATER) hasWater = true;
+                    }
+                    if(hasWater) { capacity += t.level === 1 ? 15 : 30; sources.push({x, y}); t.watered = true; }
+                }
+            }
+            let available = capacity;
+            if (sources.length > 0 && available > 0) {
+                let q = [...sources]; let visited = new Set(sources.map(p => `${p.x},${p.y}`)); let head = 0;
+                while (head < q.length && available > 0) {
+                    let curr = q[head++]; let tile = gameState.grid[curr.y][curr.x];
+                    if ((tile.isZoned || tile.type === TYPES.ENTERTAIN) && tile.level > 0 && !tile.waterSource) {
+                        let cost = tile.level === 4 ? 3 : (tile.level === 3 ? 2 : 1);
+                        if (available >= cost) { available -= cost; used += cost; tile.watered = true; } else { tile.watered = false; continue; }
+                    } else tile.watered = true;
+                    
+                    for (let p of gameState.pipes) {
+                        let next = null; if (p.x1 === curr.x && p.y1 === curr.y) next = {x: p.x2, y: p.y2}; else if (p.x2 === curr.x && p.y2 === curr.y) next = {x: p.x1, y: p.y1};
+                        if (next) { let k = `${next.x},${next.y}`; if (!visited.has(k)) { visited.add(k); q.push(next); } }
+                    }
+                    for (let d of DIRS) {
+                        let nx = curr.x + d[0], ny = curr.y + d[1];
+                        if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
+                            let adj = gameState.grid[ny][nx];
+                            if (adj.isZoned || adj.type === TYPES.ENTERTAIN) {
+                                let k = `${nx},${ny}`; if (!visited.has(k)) { visited.add(k); q.push({x: nx, y: ny}); }
+                            }
+                        }
+                    }
+                }
+            }
+            gameState.waterCapacity = capacity; gameState.waterUsed = used;
+        }
+
+        function calculatePopulation() {
+            let pop = 0;
+            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { let t = gameState.grid[y][x]; if (t.type === TYPES.RESIDENTIAL && t.level > 0) pop += t.density; }
+            gameState.population = pop;
+        }
+
+        function updateDemands() {
+            let workforce = 0, jobs = 0, shops = 0;
+            let entertains = [], forests = [], polluters = [], heavyIndustries = [];
+            
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x];
+                    if (t.type === TYPES.COMMERCIAL && t.level > 0) { jobs += t.density; shops += t.level; }
+                    if (t.type === TYPES.INDUSTRIAL && t.level > 0) {
+                        jobs += t.density;
+                        if (t.level >= 3) heavyIndustries.push({x, y});
+                    }
+                    if (t.type === TYPES.ENTERTAIN && t.powered && t.watered && t.level > 0) entertains.push({x, y, level: t.level});
+                    if (t.type === TYPES.FOREST || t.hasTree) forests.push({x, y});
+                    if ((t.type === TYPES.POWER || t.type === TYPES.PUMP) && t.level > 0) polluters.push({x, y});
+                }
+            }
+
+            let totalResTiles = 0, totalEntScore = 0, totalForestScore = 0;
+            let totalPollutionScore = 0, totalHeavyIndScore = 0;
+            
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x];
+                    if (t.type === TYPES.RESIDENTIAL && t.level > 0) {
+                        workforce += t.density; totalResTiles++;
+                        
+                        let maxEntLvl = 0;
+                        for (let e of entertains) { if (Math.abs(e.x - x) <= 10 && Math.abs(e.y - y) <= 10) { if (e.level > maxEntLvl) maxEntLvl = e.level; } }
+                        if (maxEntLvl === 1) totalEntScore += 5; else if (maxEntLvl === 2) totalEntScore += 10; else if (maxEntLvl === 3) totalEntScore += 20;
+                        
+                        let hasForest = false;
+                        for (let f of forests) { if (Math.abs(f.x - x) <= 5 && Math.abs(f.y - y) <= 5) { hasForest = true; break; } }
+                        if (hasForest) totalForestScore += 10;
+
+                        let hasPolluter = false;
+                        for (let p of polluters) { if (Math.abs(p.x - x) <= 5 && Math.abs(p.y - y) <= 5) { hasPolluter = true; break; } }
+                        if (hasPolluter) totalPollutionScore -= 5;
+
+                        let hasHeavyInd = false;
+                        for (let hi of heavyIndustries) { if (Math.abs(hi.x - x) <= 5 && Math.abs(hi.y - y) <= 5) { hasHeavyInd = true; break; } }
+                        if (hasHeavyInd) totalHeavyIndScore -= 10;
+                    }
+                }
+            }
+
+            if (workforce === 0 && jobs === 0) { gameState.demand = { R: 80, C: 20, I: 20 }; gameState.happiness = 0; } 
+            else {
+                gameState.demand.R = Math.max(0, Math.min(100, 40 + (jobs * 1.5 - workforce) * 2));
+                gameState.demand.C = Math.max(0, Math.min(100, 30 + (workforce - jobs) * 1.2));
+                gameState.demand.I = Math.max(0, Math.min(100, 40 + (workforce - jobs) * 1.5));
+                
+                let shopRatio = workforce > 0 ? (shops * 10) / workforce : 1; let jobHappy = Math.min(50, shopRatio * 50);
+                let powerRatio = gameState.powerCapacity > 0 ? (gameState.powerCapacity - gameState.powerUsed) / gameState.powerCapacity : -1;
+                let waterRatio = gameState.waterCapacity > 0 ? (gameState.waterCapacity - gameState.waterUsed) / gameState.waterCapacity : -1;
+                let powerHappy = powerRatio >= 0 ? 10 : -10; let waterHappy = waterRatio >= 0 ? 10 : -10;
+                
+                let avgEntHappy = totalResTiles > 0 ? totalEntScore / totalResTiles : 0;
+                let avgForestHappy = totalResTiles > 0 ? totalForestScore / totalResTiles : 0;
+                let avgPollution = totalResTiles > 0 ? totalPollutionScore / totalResTiles : 0;
+                let avgHeavyInd = totalResTiles > 0 ? totalHeavyIndScore / totalResTiles : 0;
+                
+                let hap = 0 + jobHappy + powerHappy + waterHappy + avgEntHappy + avgForestHappy + avgPollution + avgHeavyInd;
+                gameState.happiness = Math.max(0, Math.min(100, Math.round(hap)));
+            }
+            document.getElementById('demand-r').style.width = `${gameState.demand.R}%`; document.getElementById('demand-c').style.width = `${gameState.demand.C}%`; document.getElementById('demand-i').style.width = `${gameState.demand.I}%`;
+        }
+
+        function simulateGrowth() {
+            let built = false; let entertains = [];
+            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { let t = gameState.grid[y][x]; if (t.type === TYPES.ENTERTAIN && t.powered && t.watered && t.level > 0) entertains.push({x, y}); }
+
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x]; if (t.isZoned && t.level > 0) t.age++;
+
+                    if (t.isZoned && t.powered && t.watered && hasRoadAccess(x, y)) {
+                        let d = gameState.demand[t.type.charAt(0)];
+                        
+                        if (t.type === TYPES.RESIDENTIAL && t.level === 0 && d > 15) {
+                            let nearEntertain = entertains.some(e => Math.abs(e.x - x) <= 10 && Math.abs(e.y - y) <= 10);
+                            let nearCI = false;
+                            if (!nearEntertain) {
+                                for(let dy=-20; dy<=20; dy++) for(let dx=-20; dx<=20; dx++) {
+                                    let nx=x+dx, ny=y+dy;
+                                    if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT) { let nt = gameState.grid[ny][nx]; if ((nt.type === TYPES.COMMERCIAL || nt.type === TYPES.INDUSTRIAL) && nt.level > 0 && nt.powered && nt.watered) { nearCI = true; break; } }
+                                }
+                            }
+                            if(nearEntertain || (nearCI && Math.random() < d / 100)) { t.level = 1; t.density = 10; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#ddd', 15); if (nearEntertain) createFloatingText("🎉 핫플 효과!", x*TILE_SIZE, y*TILE_SIZE, '#fb7185'); built = true; }
+                        }
+                        
+                        if ((t.type === TYPES.COMMERCIAL || t.type === TYPES.INDUSTRIAL) && t.level === 0 && d > 15) {
+                            if (Math.random() < d / 100) { t.level = 1; t.density = 10; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#ddd', 15); built = true; }
+                        }
+
+                        if ((t.type === TYPES.COMMERCIAL || t.type === TYPES.INDUSTRIAL) && t.level > 0 && t.level < 4) {
+                            let req = t.level === 1 ? 10 : (t.level === 2 ? 30 : 60);
+                            if (t.type === TYPES.COMMERCIAL) req = t.level === 1 ? 20 : (t.level === 2 ? 60 : 120);
+                            if (t.carArrivals >= req) { t.level++; t.density = t.level * 10; t.carArrivals = 0; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#facc15', 20); built = true; }
+                        }
+                    }
+                }
+            }
+            if (built) { calculatePopulation(); updatePowerGrid(); updateWaterGrid(); updateDemands(); }
+        }
+
+        function hasRoadAccess(x, y) { for(let d of DIRS) { let nx = x + d[0], ny = y + d[1]; if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT && gameState.grid[ny][nx].type === TYPES.ROAD) return true; } return false; }
+
+        function calculateEconomy() {
+            let upkeep = 0; let tax = 0;
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x];
+                    if (t.type === TYPES.ROAD) upkeep += 1;
+                    if (t.type === TYPES.POWER) upkeep += t.level === 2 ? 30 : 10;
+                    if (t.type === TYPES.PUMP) upkeep += t.level === 2 ? 30 : 10;
+                    if (t.type === TYPES.ENTERTAIN && t.powered && t.watered) upkeep += (t.level === 1 ? 150 : (t.level === 2 ? 300 : 600));
+                    
+                    if (t.powered && t.watered && t.level > 0) {
+                        if (t.type === TYPES.RESIDENTIAL) { upkeep += t.level * 2; tax += t.level * 15; }
+                        if (t.type === TYPES.COMMERCIAL) upkeep += t.level * 5;
+                        if (t.type === TYPES.INDUSTRIAL) upkeep += t.level * 10;
+                    }
+                }
+            }
+            gameState.money += tax; gameState.monthlyRevenue = (gameState.monthlyRevenue || 0) + tax;
+            gameState.money -= upkeep; gameState.lastIncome = (gameState.monthlyRevenue || 0) - upkeep; gameState.monthlyRevenue = 0;
+            if (gameState.money < 0 && gameState.lastIncome < 0) showToast("경고: 파산 위기입니다!", "error");
+            updateHUD();
+        }
+
+        function lerpAngle(a, b, t) { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return a + d * t; }
+
+        function findRoadPath(startX, startY, endX, endY) {
+            let pq = [{x: startX, y: startY, path: [{x: startX, y: startY}], cost: 0}];
+            let visited = new Map(); visited.set(`${startX},${startY}`, 0);
+            while(pq.length > 0) {
+                pq.sort((a, b) => a.cost - b.cost); let curr = pq.shift();
+                if (curr.x === endX && curr.y === endY) return curr.path;
+                for(let d of DIRS) {
+                    let nx = curr.x + d[0], ny = curr.y + d[1];
+                    if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
+                        if (gameState.grid[ny][nx].type === TYPES.ROAD) {
+                            let k = `${nx},${ny}`; let cLvl = congestionMap.get(k) || 0;
+                            let stepCost = 1; if (cLvl >= 3) stepCost = 15; else if (cLvl >= 2) stepCost = 4;
+                            let newCost = curr.cost + stepCost;
+                            if (!visited.has(k) || newCost < visited.get(k)) { visited.set(k, newCost); pq.push({x: nx, y: ny, path: [...curr.path, {x: nx, y: ny}], cost: newCost}); }
+                        }
+                    }
+                }
+            } return null;
+        }
+
+        function spawnCarForBuilding(bx, by, type, level) {
+            let maxCars = type === TYPES.ENTERTAIN ? level + 1 : level; 
+            let currentCars = gameState.cars.filter(c => c.homeX === bx && c.homeY === by).length;
+            if (currentCars >= maxCars) return;
+
+            let dests = [];
+            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                let dt = gameState.grid[y][x];
+                if (type === TYPES.RESIDENTIAL && (dt.type === TYPES.COMMERCIAL || dt.type === TYPES.INDUSTRIAL || dt.type === TYPES.ENTERTAIN) && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
+                if ((type === TYPES.COMMERCIAL || type === TYPES.INDUSTRIAL) && dt.type === TYPES.RESIDENTIAL && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
+                if (type === TYPES.ENTERTAIN && dt.type === TYPES.COMMERCIAL && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
+            }
+            if (dests.length === 0) return; let dest = dests[Math.floor(Math.random() * dests.length)];
+
+            let startRoad = null, endRoad = null;
+            for(let d of DIRS) {
+                if(!startRoad && gameState.grid[by+d[1]]?.[bx+d[0]]?.type === TYPES.ROAD) startRoad = {x: bx+d[0], y: by+d[1]};
+                if(!endRoad && gameState.grid[dest.y+d[1]]?.[dest.x+d[0]]?.type === TYPES.ROAD) endRoad = {x: dest.x+d[0], y: dest.y+d[1]};
+            }
+
+            if (startRoad && endRoad) {
+                let path = findRoadPath(startRoad.x, startRoad.y, endRoad.x, endRoad.y);
+                if (path && path.length > 0) {
+                    let waypoints = []; let offsetAmt = TILE_SIZE * 0.25; 
+                    
+                    for (let i = 0; i < path.length; i++) {
+                        let cx = path[i].x * TILE_SIZE + TILE_SIZE / 2;
+                        let cy = path[i].y * TILE_SIZE + TILE_SIZE / 2;
+
+                        let dinX = 0, dinY = 0;
+                        if (i > 0) { dinX = path[i].x - path[i-1].x; dinY = path[i].y - path[i-1].y; } 
+                        else if (path.length > 1) { dinX = path[1].x - path[0].x; dinY = path[1].y - path[0].y; } 
+                        else { dinX = 1; dinY = 0; }
+                        let ninX = -dinY; let ninY = dinX;
+
+                        let doutX = 0, doutY = 0;
+                        if (i < path.length - 1) { doutX = path[i+1].x - path[i].x; doutY = path[i+1].y - path[i].y; } 
+                        else { doutX = dinX; doutY = dinY; }
+                        let noutX = -doutY; let noutY = doutX;
+
+                        let px, py;
+                        if (dinX === doutX && dinY === doutY) { px = cx + ninX * offsetAmt; py = cy + ninY * offsetAmt; }
+                        else { px = cx + (ninX + noutX) * offsetAmt; py = cy + (ninY + noutY) * offsetAmt; }
+                        waypoints.push({x: px, y: py, gridX: path[i].x, gridY: path[i].y});
+                    }
+
+                    gameState.cars.push({
+                        homeX: bx, homeY: by, destX: dest.x, destY: dest.y,
+                        x: waypoints[0].x, y: waypoints[0].y,
+                        path: path, waypoints: waypoints, pathIndex: 1,
+                        baseSpeed: 1.0 + Math.random() * 0.5, currentSpeed: 0,
+                        angle: Math.atan2(waypoints.length > 1 ? waypoints[1].y - waypoints[0].y : 0, waypoints.length > 1 ? waypoints[1].x - waypoints[0].x : 1),
+                        stuckTimer: 0, ignoreCol: false,
+                        color: ['#ef4444', '#3b82f6', '#ffffff', '#eab308', '#22c55e'][Math.floor(Math.random()*5)]
+                    });
+                }
+            }
+        }
+
+        function updateAnimations() {
+            for(let i = gameState.particles.length - 1; i >= 0; i--) { let p = gameState.particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) gameState.particles.splice(i, 1); }
+            
+            if (Math.random() < 0.2) { 
+                for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { 
+                    let t = gameState.grid[y][x]; 
+                    if ((t.isZoned || t.type === TYPES.ENTERTAIN) && t.level > 0 && t.powered && t.watered && Math.random() < 0.05) { 
+                        if (t.type === TYPES.RESIDENTIAL || t.type === TYPES.ENTERTAIN || (t.type !== TYPES.RESIDENTIAL && t.level >= 2)) {
+                            spawnCarForBuilding(x, y, t.type, t.level); 
+                        }
+                    } 
+                } 
+            }
+
+            congestionMap.clear(); let carBoxes = gameState.cars.map((c, i) => ({ x: c.x, y: c.y, id: i }));
+
+            for(let i = gameState.cars.length - 1; i >= 0; i--) {
+                let car = gameState.cars[i];
+                
+                if (!car || !car.waypoints || !car.path) { gameState.cars.splice(i, 1); continue; }
+
+                if (car.pathIndex >= car.waypoints.length) { 
+                    let dt = gameState.grid[car.destY][car.destX]; 
+                    let homeTile = gameState.grid[car.homeY][car.homeX];
+                    let isFromCI = homeTile && (homeTile.type === TYPES.COMMERCIAL || homeTile.type === TYPES.INDUSTRIAL);
+                    let isFromEnt = homeTile && homeTile.type === TYPES.ENTERTAIN;
+                    let isFromRes = homeTile && homeTile.type === TYPES.RESIDENTIAL;
+
+                    if (dt && dt.level > 0 && dt.powered && dt.watered) {
+                        let earned = 0;
+                        if (isFromRes && (dt.type === TYPES.COMMERCIAL || dt.type === TYPES.INDUSTRIAL)) {
+                            if (dt.type === TYPES.COMMERCIAL) earned = [0, 2, 4, 6, 8][dt.level] || 8;
+                            if (dt.type === TYPES.INDUSTRIAL) earned = [0, 15, 35, 70, 120][dt.level] || 120;
+                            dt.carArrivals = (dt.carArrivals || 0) + 1;
+                        } else if (isFromRes && dt.type === TYPES.ENTERTAIN) {
+                            earned = dt.level * 15; 
+                        } else if (isFromCI && dt.type === TYPES.RESIDENTIAL) {
+                            earned = 0; 
+                        } else if (isFromEnt && dt.type === TYPES.COMMERCIAL) {
+                            earned = dt.level * 3; 
+                            dt.carArrivals = (dt.carArrivals || 0) + 1;
+                        }
+                        
+                        if (earned > 0) { gameState.money += earned; gameState.monthlyRevenue = (gameState.monthlyRevenue || 0) + earned; createFloatingText(`+$${earned}`, car.x, car.y - 10, '#4ade80'); updateHUD(); }
+                    }
+                    gameState.cars.splice(i, 1); continue; 
+                }
+
+                let targetWP = car.waypoints[car.pathIndex];
+                let currentGridX = Math.floor(car.x / TILE_SIZE); let currentGridY = Math.floor(car.y / TILE_SIZE);
+                let k = `${currentGridX},${currentGridY}`; congestionMap.set(k, (congestionMap.get(k) || 0) + 1);
+
+                let dx = targetWP.x - car.x; let dy = targetWP.y - car.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < car.currentSpeed) { car.x = targetWP.x; car.y = targetWP.y; car.pathIndex++; continue; }
+
+                let vxNorm = dx / (dist || 1); let vyNorm = dy / (dist || 1);
+                let targetAngle = Math.atan2(vyNorm, vxNorm); car.angle = lerpAngle(car.angle, targetAngle, 0.15);
+
+                let blocked = false; let rightX = -vyNorm, rightY = vxNorm; 
+                if (!car.ignoreCol) {
+                    for (let j = 0; j < carBoxes.length; j++) {
+                        if (i === j) continue; let other = carBoxes[j]; let odx = other.x - car.x, ody = other.y - car.y; let odist = Math.sqrt(odx*odx + ody*ody);
+                        if (odist < 20) { let dot = (odx * vxNorm + ody * vyNorm) / (odist || 1); if (dot > 0.8) { blocked = true; break; } }
+                    }
+                }
+
+                if (blocked) {
+                    car.currentSpeed = Math.max(0, car.currentSpeed - 0.2); car.stuckTimer++;
+                    if (car.stuckTimer > 60) { 
+                        car.x += -rightX * 8; car.y += -rightY * 8; 
+                        car.currentSpeed = car.baseSpeed * 2.5; car.stuckTimer = 0; car.ignoreCol = true; 
+                        createFloatingText("💨", car.x, car.y, '#fff'); setTimeout(()=>{car.ignoreCol=false;}, 1000); 
+                    }
+                } else { car.currentSpeed = Math.min(car.baseSpeed, car.currentSpeed + 0.1); car.stuckTimer = 0; }
+
+                car.x += vxNorm * car.currentSpeed; car.y += vyNorm * car.currentSpeed;
+            }
+
+            if (Math.random() < 0.3) { for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { let t = gameState.grid[y][x]; if (t.type === TYPES.INDUSTRIAL && t.level > 1 && t.powered && t.watered) createParticles(x * TILE_SIZE + TILE_SIZE/2 + 5, y * TILE_SIZE - (t.level*10), 'rgba(200,200,200,0.5)', 1); } }
+        }
+
+        function createParticles(x, y, color, count) { for(let i=0; i<count; i++) gameState.particles.push({ x: x+(Math.random()-0.5)*20, y: y+(Math.random()-0.5)*20, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2-1, life: 1.0, color: color, size: Math.random()*3+1 }); }
+        function createFloatingText(text, x, y, color) { floatingTexts.push({ text, x, y, color, life: 1.0 }); }
+
+        function drawBuildingBox(ctx, x, y, width, depth, height, baseC, highC, darkC, accentC) {
+            const roofY = y - height;
+            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(x + width, y); ctx.lineTo(x + width + depth, y - depth); ctx.lineTo(x + width + depth + 5, y - depth + 5); ctx.lineTo(x + width, y + 5); ctx.fill(); ctx.fillRect(x + 5, y + 5, width, 5);
+            ctx.fillStyle = darkC; ctx.beginPath(); ctx.moveTo(x + width, y); ctx.lineTo(x + width + depth, y - depth); ctx.lineTo(x + width + depth, roofY - depth); ctx.lineTo(x + width, roofY); ctx.fill();
+            ctx.fillStyle = baseC; ctx.fillRect(x, roofY, width, height);
+            ctx.fillStyle = highC; ctx.beginPath(); ctx.moveTo(x, roofY); ctx.lineTo(x + width, roofY); ctx.lineTo(x + width + depth, roofY - depth); ctx.lineTo(x + depth, roofY - depth); ctx.fill();
+            ctx.strokeStyle = darkC; ctx.lineWidth = 1; ctx.strokeRect(x, roofY, width, height);
+            ctx.beginPath(); ctx.moveTo(x, roofY); ctx.lineTo(x+depth, roofY-depth); ctx.moveTo(x+width, roofY); ctx.lineTo(x+width+depth, roofY-depth); ctx.moveTo(x+width, y); ctx.lineTo(x+width+depth, y-depth); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x+depth, roofY-depth); ctx.lineTo(x+width+depth, roofY-depth); ctx.lineTo(x+width+depth, y-depth); ctx.stroke();
+            if(accentC) { ctx.fillStyle = accentC; ctx.fillRect(x, y-2, width, 2); }
+        }
+
+        function drawRes(ctx, x, y, size, level) {
+            const d = 10; let h = 15 + level * 10;
+            if (level === 1) { drawBuildingBox(ctx, x+5, y-5, size-10, d, 15, '#fefce8', '#fefce8', '#fde047'); ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.moveTo(x, y-20); ctx.lineTo(x+size/2+d/2, y-35-d/2); ctx.lineTo(x+size+d, y-20-d); ctx.fill(); ctx.fillStyle = '#78350f'; ctx.fillRect(x+size/2-3, y-15, 6, 10); ctx.fillStyle = '#bae6fd'; ctx.fillRect(x+8, y-18, 6, 6); } 
+            else if (level === 2) { drawBuildingBox(ctx, x+4, y-4, size-8, d, h, '#e5e7eb', '#f3f4f6', '#9ca3af', '#374151'); ctx.fillStyle = '#bae6fd'; for(let i=0;i<3;i++) for(let j=0;j<2;j++) ctx.fillRect(x+8+j*12, y-h+8+i*10, 6, 6); } 
+            else { drawBuildingBox(ctx, x+2, y-2, size-4, d, h, '#d1d5db', '#e5e7eb', '#6b7280', '#1f2937'); ctx.fillStyle = '#93c5fd'; for(let i=0;i<5;i++) ctx.fillRect(x+5, y-h+5+i*8, size-14, 4); }
+        }
+
+        function drawCom(ctx, x, y, size, level) {
+            const d = 8; let h = 20 + level * 12;
+            if (level === 1) { drawBuildingBox(ctx, x+4, y-4, size-8, d, h, '#bfdbfe', '#dbeafe', '#60a5fa', '#1e40af'); ctx.fillStyle = '#93c5fd'; ctx.fillRect(x+6, y-12, size-12, 8); ctx.fillStyle = '#1e3a8a'; ctx.fillText('SHOP', x+8, y-15); } 
+            else if (level === 2) { drawBuildingBox(ctx, x+3, y-3, size-6, d, h, '#93c5fd', '#bfdbfe', '#3b82f6', '#1d4ed8'); ctx.strokeStyle = '#bfdbfe'; ctx.lineWidth=0.5; for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(x+3+i*((size-6)/4), y-h-3); ctx.lineTo(x+3+i*((size-6)/4), y-3); ctx.stroke(); } for(let i=1;i<5;i++){ ctx.beginPath(); ctx.moveTo(x+3, y-h-3+i*(h/5)); ctx.lineTo(x+size-3, y-h-3+i*(h/5)); ctx.stroke(); } } 
+            else { drawBuildingBox(ctx, x+2, y-2, size-4, d, h, '#60a5fa', '#93c5fd', '#2563eb', '#1e40af'); ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.moveTo(x+2,y-h); ctx.lineTo(x+size-2,y-h+20); ctx.lineTo(x+2,y-h+40); ctx.fill(); }
+        }
+
+        function drawInd(ctx, x, y, size, level) {
+            const d = 12; let h = 15 + level * 10;
+            if (level === 1) { drawBuildingBox(ctx, x+5, y-5, size-10, d, h, '#fdba74', '#fed7aa', '#ea580c', '#9a3412'); ctx.fillStyle='#713f12'; ctx.fillRect(x+8,y-10,8,8); ctx.fillRect(x+size-16,y-10,8,8); } 
+            else { drawBuildingBox(ctx, x+4, y-4, size-8, d, h, '#f97316', '#fb923c', '#c2410c', '#7c2d12'); ctx.fillStyle='#78716c'; ctx.fillRect(x+size-15, y-h-15-d, 6, 15); ctx.fillStyle='#44403c'; ctx.fillRect(x+size-15, y-h-15-d, 6, 2); if(level>=3){ ctx.fillStyle='#78716c'; ctx.fillRect(x+10, y-h-20-d, 6, 20); ctx.fillStyle='#44403c'; ctx.fillRect(x+10, y-h-20-d, 6, 2); } }
+        }
+
+        function drawPower(ctx, x, y, size, level) { const d = 10; drawBuildingBox(ctx, x+2, y-2, size-4, d, 20 + level*5, '#9ca3af', '#d1d5db', '#4b5563', '#1f2937'); ctx.fillStyle='#6b7280'; ctx.beginPath(); ctx.moveTo(x+5, y-25); ctx.quadraticCurveTo(x+15, y-50, x+25, y-25); ctx.lineTo(x+25+d/2, y-25-d/2); ctx.quadraticCurveTo(x+15+d/2, y-50-d/2, x+5+d/2, y-25-d/2); ctx.fill(); ctx.fillStyle='#4b5563'; ctx.beginPath(); ctx.ellipse(x+15+d/4, y-50-d/4, 10, 3, Math.PI/4, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#ef4444'; ctx.fillRect(x+15, y-15, 10, 5); }
+        function drawPump(ctx, x, y, size, level) { const d = 8; drawBuildingBox(ctx, x+4, y-4, size-8, d, 15 + level*5, '#cbd5e1', '#e2e8f0', '#64748b', '#0ea5e9'); ctx.fillStyle='#38bdf8'; ctx.beginPath(); ctx.arc(x+size/2, y-25, 6, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#0284c7'; ctx.fillRect(x+size/2-2, y-15, 4, 15); }
+        function drawEntertain(ctx, x, y, size, level) { 
+            const d = 8; drawBuildingBox(ctx, x+2, y-2, size-4, d, 10 + level*5, '#fecdd3', '#ffe4e6', '#fb7185', '#be123c'); 
+            ctx.strokeStyle='#fb7185'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x+size/2+d/2, y-25-d/2, 15, 0, Math.PI*2); ctx.stroke(); 
+            ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(x+size/2+d/2, y-25-d/2, 3, 0, Math.PI*2); ctx.fill(); 
+            for(let i=0;i<8;i++){ let a=i*Math.PI/4 + Date.now()/1000; ctx.fillStyle=['#ef4444','#3b82f6','#22c55e'][i%3]; ctx.fillRect(x+size/2+d/2+Math.cos(a)*15-2, y-25-d/2+Math.sin(a)*15-2, 4, 4); }
+            if (level >= 2) { ctx.fillStyle = '#6366f1'; ctx.fillRect(x+5, y-40, 4, 30); let dropY = y - 40 + (Math.sin(Date.now()/500) + 1)/2 * 20; ctx.fillStyle = '#f59e0b'; ctx.fillRect(x+3, dropY, 8, 4); }
+            if (level >= 3) { ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x+size-5, y-10); ctx.quadraticCurveTo(x+size-10, y-30, x+size-20, y-15); ctx.stroke(); }
+        }
+
+        function draw() {
+            CTX.fillStyle = '#0f172a'; CTX.fillRect(0, 0, CANVAS.width, CANVAS.height); CTX.save(); CTX.translate(-gameState.camera.x * gameState.camera.zoom, -gameState.camera.y * gameState.camera.zoom); CTX.scale(gameState.camera.zoom, gameState.camera.zoom);
+            const sCol = Math.max(0, Math.floor(gameState.camera.x / TILE_SIZE) - 1); const eCol = Math.min(GRID_WIDTH, Math.floor((gameState.camera.x + CANVAS.width / gameState.camera.zoom) / TILE_SIZE) + 2);
+            const sRow = Math.max(0, Math.floor(gameState.camera.y / TILE_SIZE) - 2); const eRow = Math.min(GRID_HEIGHT, Math.floor((gameState.camera.y + CANVAS.height / gameState.camera.zoom) / TILE_SIZE) + 3);
+
+            CTX.fillStyle = '#8fcc70'; CTX.fillRect(sCol*TILE_SIZE, sRow*TILE_SIZE, (eCol-sCol)*TILE_SIZE, (eRow-sRow)*TILE_SIZE);
+            CTX.strokeStyle = 'rgba(0, 0, 0, 0.05)'; CTX.lineWidth = 1; CTX.beginPath();
+            for (let x=sCol; x<=eCol; x++) { CTX.moveTo(x*TILE_SIZE, sRow*TILE_SIZE); CTX.lineTo(x*TILE_SIZE, eRow*TILE_SIZE); } for (let y=sRow; y<=eRow; y++) { CTX.moveTo(sCol*TILE_SIZE, y*TILE_SIZE); CTX.lineTo(eCol*TILE_SIZE, y*TILE_SIZE); } CTX.stroke();
+
+            for(let y=sRow; y<eRow; y++) for(let x=sCol; x<eCol; x++) {
+                if(y<0||y>=GRID_HEIGHT||x<0||x>=GRID_WIDTH) continue;
+                let t = gameState.grid[y][x], px = x*TILE_SIZE, py = y*TILE_SIZE;
+                if(t.type === TYPES.WATER) { CTX.fillStyle='#3b82f6'; CTX.fillRect(px, py, TILE_SIZE, TILE_SIZE); CTX.fillStyle='rgba(255,255,255,0.2)'; CTX.fillRect(px+5, py+10, 10, 2); CTX.fillRect(px+20, py+25, 15, 2); }
+            }
+            if (gameState.showPipes) { gameState.pipes.forEach(p => { let px1 = p.x1*TILE_SIZE+TILE_SIZE/2, py1 = p.y1*TILE_SIZE+TILE_SIZE/2, px2 = p.x2*TILE_SIZE+TILE_SIZE/2, py2 = p.y2*TILE_SIZE+TILE_SIZE/2; CTX.strokeStyle='#0ea5e9'; CTX.lineWidth=4; CTX.beginPath(); CTX.moveTo(px1, py1); CTX.lineTo(px2, py2); CTX.stroke(); CTX.fillStyle='#0284c7'; CTX.beginPath(); CTX.arc(px1, py1, 4, 0, Math.PI*2); CTX.fill(); CTX.beginPath(); CTX.arc(px2, py2, 4, 0, Math.PI*2); CTX.fill(); }); }
+
+            for(let y=sRow; y<eRow; y++) for(let x=sCol; x<eCol; x++) {
+                if(y<0||y>=GRID_HEIGHT||x<0||x>=GRID_WIDTH) continue;
+                let t = gameState.grid[y][x], px = x*TILE_SIZE, py = y*TILE_SIZE;
+                if (t.type === TYPES.ROAD) {
+                    let c = congestionMap.get(`${x},${y}`) || 0; CTX.fillStyle = c >= 3 ? '#ef4444' : (c >= 2 ? '#fb923c' : '#4b5563'); CTX.fillRect(px+1, py+1, TILE_SIZE-2, TILE_SIZE-2);
+                    CTX.strokeStyle = '#fbbf24'; CTX.setLineDash([5, 5]); CTX.beginPath();
+                    let hN = y>0&&gameState.grid[y-1][x].type===TYPES.ROAD, hS = y<GRID_HEIGHT-1&&gameState.grid[y+1][x].type===TYPES.ROAD, hE = x<GRID_WIDTH-1&&gameState.grid[y][x+1].type===TYPES.ROAD, hW = x>0&&gameState.grid[y][x-1].type===TYPES.ROAD;
+                    if(hN) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px+TILE_SIZE/2, py); } if(hS) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px+TILE_SIZE/2, py+TILE_SIZE); } if(hE) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px+TILE_SIZE, py+TILE_SIZE/2); } if(hW) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px, py+TILE_SIZE/2); }
+                    if(!hN&&!hS&&!hE&&!hW) { CTX.fillStyle='#fbbf24'; CTX.fillRect(px+TILE_SIZE/2-2, py+TILE_SIZE/2-2, 4, 4); } CTX.stroke(); CTX.setLineDash([]);
+                } 
+                else if (t.isZoned || t.powerSource || t.waterSource || t.type === TYPES.ENTERTAIN) {
+                    CTX.fillStyle = '#6b7280'; CTX.fillRect(px+2, py+2, TILE_SIZE-4, TILE_SIZE-4);
+                    if (t.level === 0) { if (t.type === TYPES.RESIDENTIAL) CTX.fillStyle = 'rgba(74, 222, 128, 0.4)'; if (t.type === TYPES.COMMERCIAL) CTX.fillStyle = 'rgba(96, 165, 250, 0.4)'; if (t.type === TYPES.INDUSTRIAL) CTX.fillStyle = 'rgba(250, 204, 21, 0.4)'; CTX.fillRect(px+2, py+2, TILE_SIZE-4, TILE_SIZE-4); }
+                }
+                if (t.hasTree) {
+                    let offX = (t.treeType === 1) ? -5 : (t.treeType === 2 ? 5 : 0);
+                    CTX.fillStyle='rgba(0,0,0,0.2)'; CTX.beginPath(); CTX.ellipse(px+TILE_SIZE/2+offX, py+TILE_SIZE-5, 8, 4, 0, 0, Math.PI*2); CTX.fill(); CTX.fillStyle='#78350f'; CTX.fillRect(px+TILE_SIZE/2-2+offX, py+TILE_SIZE-15, 4, 10); CTX.fillStyle=t.treeType===1?'#16a34a':(t.treeType===2?'#15803d':'#22c55e'); CTX.beginPath(); CTX.arc(px+TILE_SIZE/2+offX, py+TILE_SIZE-20, 10, 0, Math.PI*2); CTX.fill();
+                }
+            }
+
+            for(let y=sRow; y<eRow; y++) for(let x=sCol; x<eCol; x++) {
+                if(y<0||y>=GRID_HEIGHT||x<0||x>=GRID_WIDTH) continue;
+                let t = gameState.grid[y][x], px = x*TILE_SIZE, baseY = (y+1)*TILE_SIZE;
+                if (t.level > 0) {
+                    if (t.type === TYPES.RESIDENTIAL) drawRes(CTX, px, baseY, TILE_SIZE, t.level); else if (t.type === TYPES.COMMERCIAL) drawCom(CTX, px, baseY, TILE_SIZE, t.level); else if (t.type === TYPES.INDUSTRIAL) drawInd(CTX, px, baseY, TILE_SIZE, t.level); else if (t.type === TYPES.POWER) drawPower(CTX, px, baseY, TILE_SIZE, t.level); else if (t.type === TYPES.PUMP) drawPump(CTX, px, baseY, TILE_SIZE, t.level); else if (t.type === TYPES.ENTERTAIN) drawEntertain(CTX, px, baseY, TILE_SIZE, t.level);
+                }
+                let nP = !t.powered && (t.isZoned || t.powerSource || t.type === TYPES.ENTERTAIN); let nW = !t.watered && (t.isZoned || t.type === TYPES.PUMP || t.type === TYPES.ENTERTAIN);
+                if (nP || nW) {
+                    let bounce = Math.sin(Date.now() / 300) * 3; let showP = nP, showW = nW;
+                    if (nP && nW) { showP = Math.floor(Date.now() / 300) % 2 === 0; showW = !showP; }
+                    let iconY = baseY - 25 + bounce;
+                    if (showP) { CTX.fillStyle='#ef4444'; CTX.beginPath(); CTX.arc(px+TILE_SIZE/2, iconY, 10, 0, Math.PI*2); CTX.fill(); CTX.fillStyle='#fef08a'; CTX.font='12px Arial'; CTX.textAlign='center'; CTX.fillText('⚡', px+TILE_SIZE/2, iconY+4); } 
+                    else if (showW) { CTX.fillStyle='#3b82f6'; CTX.beginPath(); CTX.arc(px+TILE_SIZE/2, iconY, 10, 0, Math.PI*2); CTX.fill(); CTX.fillStyle='#ffffff'; CTX.font='12px Arial'; CTX.textAlign='center'; CTX.fillText('💧', px+TILE_SIZE/2, iconY+4); }
+                }
+            }
+
+            if (gameState.showWires) { gameState.wires.forEach(w => { let px1 = w.x1*TILE_SIZE+TILE_SIZE/2, py1 = w.y1*TILE_SIZE+TILE_SIZE/2, px2 = w.x2*TILE_SIZE+TILE_SIZE/2, py2 = w.y2*TILE_SIZE+TILE_SIZE/2; CTX.strokeStyle='#facc15'; CTX.lineWidth=2; CTX.beginPath(); CTX.moveTo(px1, py1-10); CTX.quadraticCurveTo((px1+px2)/2, (py1+py2)/2+20, px2, py2-10); CTX.stroke(); CTX.fillStyle='#78350f'; CTX.fillRect(px1-2, py1-15, 4, 5); CTX.fillRect(px2-2, py2-15, 4, 5); }); }
+
+            for (let c of gameState.cars) { CTX.save(); CTX.translate(c.x, c.y); CTX.rotate(c.angle); CTX.fillStyle = c.color; CTX.fillRect(-6, -3, 12, 6); CTX.fillStyle='#9ca3af'; CTX.fillRect(-2, -2, 4, 4); CTX.fillStyle='#facc15'; CTX.fillRect(4, -2, 2, 1); CTX.fillRect(4, 1, 2, 1); CTX.fillStyle='#ef4444'; CTX.fillRect(-6, -2, 1, 1); CTX.fillRect(-6, 1, 1, 1); CTX.restore(); }
+
+            for (let p of gameState.particles) { CTX.globalAlpha=Math.max(0,p.life); CTX.fillStyle=p.color; CTX.beginPath(); CTX.arc(p.x, p.y, p.size, 0, Math.PI*2); CTX.fill(); } CTX.globalAlpha=1.0;
+            for (let i=floatingTexts.length-1; i>=0; i--) { let ft = floatingTexts[i]; CTX.globalAlpha=Math.max(0,ft.life); CTX.fillStyle=ft.color; CTX.font='bold 16px Inter'; CTX.fillText(ft.text, ft.x, ft.y); ft.y-=0.5; ft.life-=0.02; if(ft.life<=0) floatingTexts.splice(i,1); } CTX.globalAlpha=1.0;
+
+            if (gameState.hoverX >= 0 && gameState.hoverY >= 0 && gameState.hoverX < GRID_WIDTH && gameState.hoverY < GRID_HEIGHT) {
+                let hx = gameState.hoverX * TILE_SIZE, hy = gameState.hoverY * TILE_SIZE; CTX.lineWidth = 2;
+                if (gameState.currentTool === 'BULLDOZE') { CTX.fillStyle='rgba(239, 68, 68, 0.4)'; CTX.strokeStyle='#ef4444'; }
+                else if (gameState.currentTool === 'WIRE' || gameState.currentTool === 'PIPE') { let st = gameState.currentTool === 'WIRE' ? gameState.wireStart : gameState.pipeStart; let col = gameState.currentTool === 'WIRE' ? '#facc15' : '#0ea5e9'; if(st){ CTX.strokeStyle=col; CTX.setLineDash([5,5]); CTX.beginPath(); CTX.moveTo(st.x*TILE_SIZE+TILE_SIZE/2, st.y*TILE_SIZE+TILE_SIZE/2); CTX.lineTo(hx+TILE_SIZE/2, hy+TILE_SIZE/2); CTX.stroke(); CTX.setLineDash([]); } CTX.fillStyle=gameState.currentTool==='WIRE'?'rgba(250,204,21,0.4)':'rgba(14,165,233,0.4)'; CTX.strokeStyle=col; }
+                else if (gameState.currentTool !== 'SELECT' && gameState.currentTool !== 'TRAFFIC') { let cost = COSTS[gameState.currentTool]; if (gameState.money >= cost) { CTX.fillStyle='rgba(255, 255, 255, 0.3)'; CTX.strokeStyle='#ffffff'; } else { CTX.fillStyle='rgba(239, 68, 68, 0.4)'; CTX.strokeStyle='#ef4444'; } CTX.fillStyle='white'; CTX.font='12px Inter'; CTX.fillText(`$${cost}`, hx+TILE_SIZE+5, hy+15); } 
+                else { CTX.fillStyle='rgba(59, 130, 246, 0.2)'; CTX.strokeStyle='#3b82f6'; }
+                CTX.fillRect(hx, hy, TILE_SIZE, TILE_SIZE); CTX.strokeRect(hx, hy, TILE_SIZE, TILE_SIZE);
+            }
+            CTX.restore();
+        }
+
+        function updateHUD() {
+            document.getElementById('ui-money').innerText = `$${Math.floor(gameState.money).toLocaleString()}`;
+            let incEl = document.getElementById('ui-income'); incEl.innerText = `${gameState.lastIncome >= 0 ? '+' : ''}$${Math.floor(gameState.lastIncome)} /월`; incEl.className = gameState.lastIncome >= 0 ? "text-[10px] text-green-400" : "text-[10px] text-red-400";
+            document.getElementById('ui-date').innerText = `${gameState.year}년 ${["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"][gameState.month-1]}`;
+            document.getElementById('ui-population').innerText = gameState.population.toLocaleString();
+            document.getElementById('ui-power-used').innerText = gameState.powerUsed; document.getElementById('ui-power-cap').innerText = gameState.powerCapacity;
+            document.getElementById('ui-water-used').innerText = gameState.waterUsed; document.getElementById('ui-water-cap').innerText = gameState.waterCapacity;
+            document.getElementById('ui-happiness').innerText = `${gameState.happiness}%`;
+        }
+
+        function showInspector(x, y, cx, cy) {
+            const t = gameState.grid[y][x]; const p = document.getElementById('inspector-panel'); const wBox = document.getElementById('insp-warnings'); const upBtn = document.getElementById('insp-upgrade');
+            let n = "빈 땅";
+            if(t.type !== TYPES.EMPTY) { if(t.type===TYPES.ROAD)n="도로"; else if(t.type===TYPES.RESIDENTIAL)n="주거 구역"; else if(t.type===TYPES.COMMERCIAL)n="상업 구역"; else if(t.type===TYPES.INDUSTRIAL)n="공업 구역"; else if(t.type===TYPES.POWER)n="발전소"; else if(t.type===TYPES.WATER)n="저수지"; else if(t.type===TYPES.PUMP)n="정수장"; else if(t.type===TYPES.ENTERTAIN)n="오락 시설"; else if(t.type===TYPES.FOREST)n="숲"; } else if(t.hasTree) n="자연 숲";
+            document.getElementById('insp-title').innerText = n;
+            document.getElementById('insp-power').innerText = t.powered ? "연결됨" : "끊김"; document.getElementById('insp-water').innerText = t.watered ? "연결됨" : "끊김";
+            document.getElementById('insp-level').innerText = t.level > 0 ? `레벨 ${t.level}` : "-"; document.getElementById('insp-density').innerText = t.density > 0 ? t.density : "-";
+            
+            wBox.innerHTML = ''; wBox.classList.add('hidden');
+            let warningsHTML = '';
+            
+            if (t.isZoned || t.type === TYPES.POWER || t.type === TYPES.PUMP || t.type === TYPES.ENTERTAIN) {
+                if(!t.powered) warningsHTML += `<div class="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs border border-red-500/50 flex items-center gap-1"><span>⚡</span> 전력망 연결 안됨</div>`;
+                if(!t.watered && t.type !== TYPES.POWER) warningsHTML += `<div class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs border border-blue-500/50 flex items-center gap-1"><span>💧</span> 수도망 연결 안됨</div>`;
+            }
+
+            if (t.type === TYPES.RESIDENTIAL && t.level > 0) {
+                let hasP = false, hasH = false;
+                for(let dy=-5; dy<=5; dy++) {
+                    for(let dx=-5; dx<=5; dx++) {
+                        let nx=x+dx, ny=y+dy;
+                        if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT) {
+                            let nt = gameState.grid[ny][nx];
+                            if ((nt.type === TYPES.POWER || nt.type === TYPES.PUMP) && nt.level > 0) hasP = true;
+                            if (nt.type === TYPES.INDUSTRIAL && nt.level >= 3) hasH = true;
+                        }
+                    }
+                }
+                if (hasP) warningsHTML += `<div class="bg-gray-500/20 text-gray-300 px-2 py-1 rounded text-[10px] border border-gray-500/50 flex items-center gap-1"><span>🏭</span> 혐오시설 인접 (행복도 -5%)</div>`;
+                if (hasH) warningsHTML += `<div class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-[10px] border border-yellow-500/50 flex items-center gap-1"><span>🏭</span> 공해 발생 (행복도 -10%)</div>`;
+            }
+
+            if (warningsHTML !== '') {
+                wBox.innerHTML = warningsHTML;
+                wBox.classList.remove('hidden');
+            }
+
+            upBtn.classList.add('hidden'); upBtn.onclick = null;
+            if ((t.type === TYPES.POWER || t.type === TYPES.PUMP) && t.level === 1) {
+                upBtn.classList.remove('hidden');
+                upBtn.onclick = () => { if (spendMoney(COSTS.UPGRADE, cx, cy)) { t.level = 2; updatePowerGrid(); updateWaterGrid(); hideInspector(); showToast("인프라 업그레이드 완료!", "info"); } };
+            }
+
+            p.style.left = `${Math.min(cx+20, window.innerWidth-200)}px`; p.style.top = `${Math.min(cy+20, window.innerHeight-200)}px`; p.classList.remove('hidden');
+        }
+        function hideInspector() { document.getElementById('inspector-panel').classList.add('hidden'); }
+
+        function gameLoop(timestamp) {
+            try {
+                if (!gameState.lastTickTime) gameState.lastTickTime = timestamp; let dt = timestamp - gameState.lastTickTime;
+                updateAnimations();
+                if (dt > gameState.tickInterval) {
+                    gameState.lastTickTime = timestamp; gameState.dayCounter++;
+                    if (gameState.dayCounter % 5 === 0) { updateDemands(); simulateGrowth(); }
+                    if (gameState.dayCounter >= 30) {
+                        gameState.dayCounter = 0; gameState.month++;
+                        if (gameState.month > 12) { gameState.month = 1; gameState.year++; }
+                        calculateEconomy();
+                    }
+                } draw();
+            } catch (err) { console.error(err); }
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = () => { initGrid(); setupEvents(); resizeCanvas(); updateHUD(); updateDemands(); showToast("도시 건설을 시작합니다!", "info"); requestAnimationFrame(gameLoop); };
+    </script>
+</body>
+</html>
