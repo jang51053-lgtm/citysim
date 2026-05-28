@@ -9,7 +9,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; background-color: #1a1a2e; user-select: none; }
         canvas { display: block; touch-action: none; }
-        .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .tool-btn, .cat-btn { transition: all 0.2s ease; }
         .tool-btn:hover, .cat-btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.1); }
         .tool-btn.active, .cat-btn.active { background: rgba(59, 130, 246, 0.5); border-color: rgba(96, 165, 250, 1); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
@@ -26,7 +26,7 @@
     <canvas id="gameCanvas"></canvas>
 
     <div class="absolute top-0 left-0 right-0 p-4 pointer-events-none flex justify-between items-start z-10">
-        <div class="glass-panel rounded-xl p-4 pointer-events-auto flex flex-wrap gap-6 shadow-lg items-center">
+        <div class="glass-panel rounded-xl p-4 pointer-events-auto flex flex-wrap gap-4 sm:gap-6 shadow-lg items-center">
             <div>
                 <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">자금</div>
                 <div class="text-xl font-bold text-green-400" id="ui-money">$4,000</div>
@@ -60,11 +60,11 @@
         </div>
 
         <div class="flex flex-col items-end gap-2 pointer-events-auto">
-            <button id="restart-btn" class="glass-panel text-red-400 px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border-red-400/30 hover:border-red-500/60">
+            <button id="restart-btn" class="glass-panel text-red-400 px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border border-red-400/30 hover:border-red-500/60">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 다시 시작
             </button>
-            <div class="glass-panel rounded-xl p-3 w-36 shadow-lg hidden sm:block">
+            <div class="glass-panel rounded-xl p-3 w-36 shadow-lg hidden sm:block border border-white/10">
                 <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">수요</div>
                 <div class="flex items-center gap-2 mb-1">
                     <div class="w-3 h-3 rounded bg-green-500"></div><div class="flex-1 bg-gray-700 h-1.5 rounded overflow-hidden"><div id="demand-r" class="bg-green-500 h-full transition-all duration-300" style="width: 50%"></div></div>
@@ -80,17 +80,20 @@
     </div>
 
     <div class="absolute bottom-6 left-0 right-0 pointer-events-none flex flex-col items-center z-10 gap-2">
+        <!-- View Toggle Buttons -->
         <div class="pointer-events-auto flex gap-2">
-            <button id="toggle-wires-btn" class="glass-panel text-white px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border-yellow-400/30">
+            <button id="toggle-wires-btn" class="glass-panel text-white px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border border-yellow-400/30">
                 <span id="toggle-wires-icon">⚡</span> <span id="toggle-wires-text">전력망 보기</span>
             </button>
-            <button id="toggle-pipes-btn" class="glass-panel text-white px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border-blue-400/30">
+            <button id="toggle-pipes-btn" class="glass-panel text-white px-3 py-1.5 rounded-full text-[10px] font-medium shadow-md hover:bg-white/10 flex items-center gap-1 transition-colors border border-blue-400/30">
                 <span id="toggle-pipes-icon">💧</span> <span id="toggle-pipes-text">수도망 보기</span>
             </button>
         </div>
 
-        <div id="submenu-infra" class="submenu-container hidden glass-panel rounded-xl p-2 pointer-events-auto flex gap-2 shadow-lg mb-1">
+        <!-- Infra Submenu -->
+        <div id="submenu-infra" class="submenu-container hidden glass-panel rounded-xl p-2 pointer-events-auto flex gap-2 shadow-lg mb-1 border border-white/10">
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="ROAD"><div class="text-sm mb-1">🛣️</div><span class="text-[9px]">도로 ($10)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="BRIDGE"><div class="text-sm mb-1">🌉</div><span class="text-[9px]">다리 ($20)</span></button>
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="WIRE"><div class="text-sm mb-1">⚡</div><span class="text-[9px]">전선 ($5)</span></button>
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="POWER"><div class="text-sm mb-1">🏭</div><span class="text-[9px]">발전소 ($500)</span></button>
             <div class="w-px bg-white/10 my-1"></div>
@@ -99,16 +102,18 @@
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="PUMP"><div class="text-sm mb-1">🏗️</div><span class="text-[9px]">정수장 ($200)</span></button>
         </div>
 
-        <div id="submenu-zone" class="submenu-container hidden glass-panel rounded-xl p-2 pointer-events-auto flex gap-2 shadow-lg mb-1">
-            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="RESIDENTIAL"><div class="w-4 h-4 mb-1 bg-green-500 rounded"></div><span class="text-[9px]">주거 ($50)</span></button>
-            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="COMMERCIAL"><div class="w-4 h-4 mb-1 bg-blue-500 rounded"></div><span class="text-[9px]">상업 ($50)</span></button>
-            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="INDUSTRIAL"><div class="w-4 h-4 mb-1 bg-yellow-500 rounded"></div><span class="text-[9px]">공업 ($50)</span></button>
+        <!-- Zone Submenu -->
+        <div id="submenu-zone" class="submenu-container hidden glass-panel rounded-xl p-2 pointer-events-auto flex gap-2 shadow-lg mb-1 border border-white/10">
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="RESIDENTIAL"><div class="w-4 h-4 mb-1 bg-green-500 rounded shadow-sm"></div><span class="text-[9px]">주거 ($50)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="COMMERCIAL"><div class="w-4 h-4 mb-1 bg-blue-500 rounded shadow-sm"></div><span class="text-[9px]">상업 ($50)</span></button>
+            <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="INDUSTRIAL"><div class="w-4 h-4 mb-1 bg-yellow-500 rounded shadow-sm"></div><span class="text-[9px]">공업 ($50)</span></button>
             <div class="w-px bg-white/10 my-1"></div>
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="ENTERTAIN"><div class="text-sm mb-1">🎡</div><span class="text-[9px]">오락 ($100)</span></button>
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-lg border border-transparent" data-tool="FOREST"><div class="text-sm mb-1">🌳</div><span class="text-[9px]">숲 ($10)</span></button>
         </div>
 
-        <div class="glass-panel rounded-2xl p-2 pointer-events-auto flex gap-2 shadow-2xl overflow-x-auto max-w-[95vw]">
+        <!-- Main Categories -->
+        <div class="glass-panel rounded-2xl p-2 pointer-events-auto flex gap-2 shadow-2xl overflow-x-auto max-w-[95vw] border border-white/10">
             <button class="tool-btn active flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-tool="SELECT"><div class="text-lg mb-1">🔍</div><span class="text-[10px] font-medium">조사</span></button>
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-tool="TRAFFIC"><div class="text-lg mb-1">🚦</div><span class="text-[10px] font-medium">교통정리</span></button>
             <button class="tool-btn flex flex-col items-center justify-center w-14 h-14 rounded-xl border border-transparent" data-tool="INVEST"><div class="text-lg mb-1">📈</div><span class="text-[10px] font-medium">투자</span></button>
@@ -120,10 +125,10 @@
         </div>
     </div>
 
-    <div id="inspector-panel" class="absolute hidden glass-panel rounded-xl p-4 pointer-events-auto shadow-lg text-sm w-48 z-20">
+    <div id="inspector-panel" class="absolute hidden glass-panel rounded-xl p-4 pointer-events-auto shadow-lg text-sm w-56 z-20 border border-white/20">
         <h3 id="insp-title" class="font-bold text-white mb-2 border-b border-white/20 pb-1">빈 타일</h3>
         <div id="insp-warnings" class="mb-2 hidden flex flex-col gap-1"></div>
-        <div class="space-y-1 text-gray-300">
+        <div class="space-y-1 text-gray-300 text-xs">
             <div class="flex justify-between"><span class="text-gray-400">전력:</span> <span id="insp-power">없음</span></div>
             <div class="flex justify-between"><span class="text-gray-400">수도:</span> <span id="insp-water">없음</span></div>
             <div class="flex justify-between"><span class="text-gray-400">레벨:</span> <span id="insp-level">-</span></div>
@@ -141,14 +146,14 @@
         
         const TILE_SIZE = 40; const GRID_WIDTH = 40; const GRID_HEIGHT = 40;
         const WORLD_WIDTH = TILE_SIZE * GRID_WIDTH; const WORLD_HEIGHT = TILE_SIZE * GRID_HEIGHT;
-        const DIRS = [[0,1], [1,0], [0,-1], [-1,0]]; // E, S, W, N
+        const DIRS = [[0,1], [1,0], [0,-1], [-1,0]];
 
         const TYPES = {
-            EMPTY: 'EMPTY', ROAD: 'ROAD', WIRE: 'WIRE', PIPE: 'PIPE', WATER: 'WATER', PUMP: 'PUMP',
+            EMPTY: 'EMPTY', ROAD: 'ROAD', BRIDGE: 'BRIDGE', WIRE: 'WIRE', PIPE: 'PIPE', WATER: 'WATER', PUMP: 'PUMP',
             RESIDENTIAL: 'RESIDENTIAL', COMMERCIAL: 'COMMERCIAL', INDUSTRIAL: 'INDUSTRIAL', POWER: 'POWER', ENTERTAIN: 'ENTERTAIN', FOREST: 'FOREST'
         };
 
-        const COSTS = { ROAD: 10, WIRE: 5, PIPE: 5, WATER: 10, PUMP: 200, RESIDENTIAL: 50, COMMERCIAL: 50, INDUSTRIAL: 50, POWER: 500, ENTERTAIN: 100, FOREST: 10, BULLDOZE: 5, UPGRADE: 1000, TRAFFIC: 0, INVEST: 500 };
+        const COSTS = { ROAD: 10, BRIDGE: 20, WIRE: 5, PIPE: 5, WATER: 10, PUMP: 200, RESIDENTIAL: 50, COMMERCIAL: 50, INDUSTRIAL: 50, POWER: 500, ENTERTAIN: 100, FOREST: 10, BULLDOZE: 5, UPGRADE: 1000, TRAFFIC: 0, INVEST: 500 };
 
         const gameState = {
             grid: [], wires: [], pipes: [],
@@ -204,7 +209,7 @@
                     gameState.currentTool = btn.dataset.tool;
                     gameState.wireStart = null; gameState.pipeStart = null;
                     
-                    if (['ROAD', 'WIRE', 'POWER'].includes(gameState.currentTool)) { gameState.showWires = true; gameState.showPipes = false; }
+                    if (['ROAD', 'BRIDGE', 'WIRE', 'POWER'].includes(gameState.currentTool)) { gameState.showWires = true; gameState.showPipes = false; }
                     else if (['WATER', 'PIPE', 'PUMP'].includes(gameState.currentTool)) { gameState.showPipes = true; gameState.showWires = false; }
                     else { gameState.showWires = false; gameState.showPipes = false; }
                     updateToggleButtonsUI(); hideInspector();
@@ -212,6 +217,7 @@
             });
 
             document.getElementById('insp-close').addEventListener('click', hideInspector);
+            
             document.getElementById('toggle-wires-btn').addEventListener('click', () => { gameState.showWires = !gameState.showWires; if(gameState.showWires) gameState.showPipes = false; updateToggleButtonsUI(); });
             document.getElementById('toggle-pipes-btn').addEventListener('click', () => { gameState.showPipes = !gameState.showPipes; if(gameState.showPipes) gameState.showWires = false; updateToggleButtonsUI(); });
 
@@ -227,9 +233,11 @@
                 }
             });
 
-            CANVAS.addEventListener('mousedown', handleMouseDown); CANVAS.addEventListener('mousemove', handleMouseMove);
+            CANVAS.addEventListener('mousedown', handleMouseDown);
+            CANVAS.addEventListener('mousemove', handleMouseMove);
             CANVAS.addEventListener('mouseup', handleMouseUp);
             CANVAS.addEventListener('mouseleave', () => { gameState.camera.isDragging = false; gameState.isPainting = false; gameState.potentialDrag = false; gameState.hoverX = -1; gameState.hoverY = -1; });
+
             CANVAS.addEventListener('touchstart', (e) => { e.preventDefault(); handleMouseDown({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY, button: 0 }); }, { passive: false });
             CANVAS.addEventListener('touchmove', (e) => { e.preventDefault(); handleMouseMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }); }, { passive: false });
             CANVAS.addEventListener('touchend', (e) => { e.preventDefault(); handleMouseUp(e); }, { passive: false });
@@ -252,8 +260,12 @@
 
         function handleMouseDown(e) {
             if (e.button === 2 || ['SELECT', 'TRAFFIC'].includes(gameState.currentTool)) {
-                gameState.potentialDrag = true; gameState.camera.lastMouseX = e.clientX; gameState.camera.lastMouseY = e.clientY;
-            } else if (e.button === 0) { gameState.isPainting = true; applyTool(e.clientX, e.clientY, true); }
+                gameState.potentialDrag = true;
+                gameState.camera.lastMouseX = e.clientX; gameState.camera.lastMouseY = e.clientY;
+            } else if (e.button === 0) {
+                gameState.isPainting = true;
+                applyTool(e.clientX, e.clientY, true);
+            }
         }
 
         function handleMouseMove(e) {
@@ -262,7 +274,10 @@
 
             if (gameState.potentialDrag) {
                 const dx = e.clientX - gameState.camera.lastMouseX; const dy = e.clientY - gameState.camera.lastMouseY;
-                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) { gameState.camera.isDragging = true; gameState.potentialDrag = false; hideInspector(); }
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    gameState.camera.isDragging = true; gameState.potentialDrag = false;
+                    hideInspector();
+                }
             }
 
             if (gameState.camera.isDragging) {
@@ -271,7 +286,9 @@
                 gameState.camera.x = Math.max(0, Math.min(gameState.camera.x, WORLD_WIDTH - CANVAS.width / gameState.camera.zoom));
                 gameState.camera.y = Math.max(0, Math.min(gameState.camera.y, WORLD_HEIGHT - CANVAS.height / gameState.camera.zoom));
                 gameState.camera.lastMouseX = e.clientX; gameState.camera.lastMouseY = e.clientY;
-            } else if (gameState.isPainting && !gameState.camera.isDragging) { applyTool(e.clientX, e.clientY, false); }
+            } else if (gameState.isPainting && !gameState.camera.isDragging) {
+                applyTool(e.clientX, e.clientY, false);
+            }
         }
 
         function handleMouseUp(e) { 
@@ -300,21 +317,15 @@
             }
 
             if (tool === 'INVEST' && isClick) {
-                if (tile.isZoned && tile.level > 0 && tile.level < 4) {
+                if ((tile.isZoned && tile.level > 0 && tile.level < 4) || (tile.type === TYPES.INDUSTRIAL && tile.level === 0)) {
                     if (spendMoney(COSTS.INVEST, screenX, screenY)) {
                         tile.level++; tile.density = tile.level * 10;
                         createParticles(x*TILE_SIZE+TILE_SIZE/2, y*TILE_SIZE+TILE_SIZE/2, '#4ade80', 20);
-                        createFloatingText("🚀 레벨업!", x * TILE_SIZE, y * TILE_SIZE, '#4ade80');
+                        createFloatingText(tile.level === 1 ? "🏭 정부 지원!" : "🚀 레벨업!", x * TILE_SIZE, y * TILE_SIZE, '#4ade80');
                         calculatePopulation(); updatePowerGrid(); updateWaterGrid(); updateDemands();
                     }
-                } else if(tile.type === TYPES.ENTERTAIN && tile.level > 0 && tile.level < 3) {
-                    if (spendMoney(COSTS.INVEST, screenX, screenY)) {
-                        tile.level++;
-                        createParticles(x*TILE_SIZE+TILE_SIZE/2, y*TILE_SIZE+TILE_SIZE/2, '#fb7185', 20);
-                        createFloatingText("🎢 확장 완료!", x * TILE_SIZE, y * TILE_SIZE, '#fb7185');
-                        updatePowerGrid(); updateWaterGrid(); updateDemands();
-                    }
-                } else showToast("최고 레벨이거나 투자할 수 없습니다.", "info");
+                } else if(tile.level === 4) showToast("이미 최고 레벨입니다.", "info");
+                else if(tile.isZoned && tile.level === 0) showToast("공업 구역 외의 빈 땅은 투자할 수 없습니다.", "info");
                 return;
             }
 
@@ -339,11 +350,19 @@
                 if (tile.type !== TYPES.EMPTY || tile.hasTree) {
                     if (spendMoney(COSTS.BULLDOZE, screenX, screenY)) {
                         createParticles(x*TILE_SIZE+TILE_SIZE/2, y*TILE_SIZE+TILE_SIZE/2, '#888', 10);
-                        tile.type = TYPES.EMPTY; tile.isZoned = false; tile.level = 0; tile.density = 0; tile.hasTree = false; tile.powerSource = false; tile.waterSource = false;
+                        let newType = tile.type === TYPES.BRIDGE ? TYPES.WATER : TYPES.EMPTY;
+                        tile.type = newType; tile.isZoned = false; tile.level = 0; tile.density = 0; tile.hasTree = false; tile.powerSource = false; tile.waterSource = false;
                         gameState.wires = gameState.wires.filter(w => !((w.x1 === x && w.y1 === y) || (w.x2 === x && w.y2 === y)));
                         gameState.pipes = gameState.pipes.filter(p => !((p.x1 === x && p.y1 === y) || (p.x2 === x && p.y2 === y)));
                         updatePowerGrid(); updateWaterGrid(); calculatePopulation(); updateDemands();
                     }
+                }
+                return;
+            }
+
+            if (tool === 'BRIDGE') {
+                if (tile.type === TYPES.WATER || tile.type === TYPES.EMPTY) {
+                    if (spendMoney(COSTS[tool], screenX, screenY)) tile.type = TYPES.BRIDGE;
                 }
                 return;
             }
@@ -356,14 +375,14 @@
             else if (['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'ENTERTAIN'].includes(tool)) {
                 if (spendMoney(COSTS[tool], screenX, screenY)) {
                     tile.type = TYPES[tool]; tile.isZoned = tool !== 'ENTERTAIN'; tile.level = 0; tile.age = 0;
-                    if(tool === 'ENTERTAIN') { tile.level = 1; updateDemands(); }
-                    updatePowerGrid(); updateWaterGrid(); 
+                    if(tool === 'ENTERTAIN') tile.level = 1;
+                    updatePowerGrid(); updateWaterGrid(); updateDemands();
                 }
             } else if (tool === 'POWER' || tool === 'PUMP') {
                 if (spendMoney(COSTS[tool], screenX, screenY)) {
                     tile.type = TYPES[tool]; tile.level = 1;
                     if(tool==='POWER') tile.powerSource = true; else tile.waterSource = true;
-                    updatePowerGrid(); updateWaterGrid();
+                    updatePowerGrid(); updateWaterGrid(); updateDemands();
                 }
             }
         }
@@ -371,13 +390,14 @@
         function spendMoney(amount, screenX, screenY) {
             if (gameState.money >= amount) {
                 gameState.money -= amount; updateHUD();
-                const wc = screenToWorld(screenX, screenY); createFloatingText(`-$${amount}`, wc.x, wc.y, '#ef4444'); return true;
+                const wc = screenToWorld(screenX, screenY); createFloatingText(`-$${amount}`, wc.x, wc.y, '#ef4444');
+                return true;
             } else { showToast("자금이 부족합니다!", "error"); return false; }
         }
 
         function showToast(msg, type="info") {
             const container = document.getElementById('toast-container'); const toast = document.createElement('div');
-            toast.className = `${type === "error" ? "bg-red-500" : "bg-blue-500"} text-white px-4 py-2 rounded shadow-lg text-sm mb-2 toast-enter font-medium`;
+            toast.className = `${type === "error" ? "bg-red-500" : "bg-blue-500"} text-white px-4 py-2 rounded shadow-lg text-sm mb-2 toast-enter font-medium border border-white/20`;
             toast.innerText = msg; container.appendChild(toast);
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 2000);
         }
@@ -464,111 +484,105 @@
 
         function updateDemands() {
             let workforce = 0, jobs = 0, shops = 0;
-            let entertains = [], forests = [], polluters = [], heavyIndustries = [];
-            
-            for (let y = 0; y < GRID_HEIGHT; y++) {
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    let t = gameState.grid[y][x];
-                    if (t.type === TYPES.COMMERCIAL && t.level > 0) { jobs += t.density; shops += t.level; }
-                    if (t.type === TYPES.INDUSTRIAL && t.level > 0) {
-                        jobs += t.density;
-                        if (t.level >= 3) heavyIndustries.push({x, y});
-                    }
-                    if (t.type === TYPES.ENTERTAIN && t.powered && t.watered && t.level > 0) entertains.push({x, y, level: t.level});
-                    if (t.type === TYPES.FOREST || t.hasTree) forests.push({x, y});
-                    if ((t.type === TYPES.POWER || t.type === TYPES.PUMP) && t.level > 0) polluters.push({x, y});
-                }
+            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                let t = gameState.grid[y][x];
+                if (t.type === TYPES.RESIDENTIAL && t.level > 0) workforce += t.density;
+                if (t.type === TYPES.COMMERCIAL && t.level > 0) { jobs += t.density; shops += t.level; }
+                if (t.type === TYPES.INDUSTRIAL && t.level > 0) jobs += t.density;
             }
 
-            let totalResTiles = 0, totalEntScore = 0, totalForestScore = 0;
-            let totalPollutionScore = 0, totalHeavyIndScore = 0;
-            
-            for (let y = 0; y < GRID_HEIGHT; y++) {
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    let t = gameState.grid[y][x];
-                    if (t.type === TYPES.RESIDENTIAL && t.level > 0) {
-                        workforce += t.density; totalResTiles++;
-                        
-                        let maxEntLvl = 0;
-                        for (let e of entertains) { if (Math.abs(e.x - x) <= 10 && Math.abs(e.y - y) <= 10) { if (e.level > maxEntLvl) maxEntLvl = e.level; } }
-                        if (maxEntLvl === 1) totalEntScore += 5; else if (maxEntLvl === 2) totalEntScore += 10; else if (maxEntLvl === 3) totalEntScore += 20;
-                        
-                        let hasForest = false;
-                        for (let f of forests) { if (Math.abs(f.x - x) <= 5 && Math.abs(f.y - y) <= 5) { hasForest = true; break; } }
-                        if (hasForest) totalForestScore += 10;
-
-                        let hasPolluter = false;
-                        for (let p of polluters) { if (Math.abs(p.x - x) <= 5 && Math.abs(p.y - y) <= 5) { hasPolluter = true; break; } }
-                        if (hasPolluter) totalPollutionScore -= 5;
-
-                        let hasHeavyInd = false;
-                        for (let hi of heavyIndustries) { if (Math.abs(hi.x - x) <= 5 && Math.abs(hi.y - y) <= 5) { hasHeavyInd = true; break; } }
-                        if (hasHeavyInd) totalHeavyIndScore -= 10;
-                    }
-                }
-            }
-
-            if (workforce === 0 && jobs === 0) { gameState.demand = { R: 80, C: 20, I: 20 }; gameState.happiness = 0; } 
+            if (workforce === 0 && jobs === 0) { gameState.demand = { R: 60, C: 20, I: 20 }; gameState.happiness = 0; } 
             else {
                 gameState.demand.R = Math.max(0, Math.min(100, 40 + (jobs * 1.5 - workforce) * 2));
                 gameState.demand.C = Math.max(0, Math.min(100, 30 + (workforce - jobs) * 1.2));
                 gameState.demand.I = Math.max(0, Math.min(100, 40 + (workforce - jobs) * 1.5));
                 
-                let shopRatio = workforce > 0 ? (shops * 10) / workforce : 1; let jobHappy = Math.min(50, shopRatio * 50);
-                let powerRatio = gameState.powerCapacity > 0 ? (gameState.powerCapacity - gameState.powerUsed) / gameState.powerCapacity : -1;
-                let waterRatio = gameState.waterCapacity > 0 ? (gameState.waterCapacity - gameState.waterUsed) / gameState.waterCapacity : -1;
-                let powerHappy = powerRatio >= 0 ? 10 : -10; let waterHappy = waterRatio >= 0 ? 10 : -10;
+                let hap = 0;
+                let shopRatio = workforce > 0 ? (shops * 10) / workforce : 1;
+                hap += Math.min(50, shopRatio * 50); // Job access (up to 50%)
+
+                let pRatio = gameState.powerCapacity > 0 ? (gameState.powerCapacity - gameState.powerUsed) / gameState.powerCapacity : 0;
+                let wRatio = gameState.waterCapacity > 0 ? (gameState.waterCapacity - gameState.waterUsed) / gameState.waterCapacity : 0;
+                if (pRatio >= 0) hap += 10; else hap -= 10;
+                if (wRatio >= 0) hap += 10; else hap -= 10;
+
+                // Check environment per residential
+                let totalRes = 0; let totalNimbyPen = 0; let totalEntBonus = 0; let totalForestPen = 0;
+                for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x];
+                    if (t.type === TYPES.RESIDENTIAL && t.level > 0) {
+                        totalRes++;
+                        let hasForest = false; let nimbyPen = 0; let entBonus = 0;
+                        for(let dy=-10; dy<=10; dy++) for(let dx=-10; dx<=10; dx++) {
+                            let nx=x+dx, ny=y+dy;
+                            if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT) {
+                                let nt = gameState.grid[ny][nx]; let dist = Math.abs(dx) + Math.abs(dy);
+                                if (dist <= 5 && nt.hasTree) hasForest = true;
+                                if (dist <= 5 && (nt.type === TYPES.POWER || nt.type === TYPES.PUMP)) nimbyPen += 5;
+                                if (dist <= 5 && nt.type === TYPES.INDUSTRIAL && nt.level >= 3) nimbyPen += 10;
+                                if (dist <= 10 && nt.type === TYPES.ENTERTAIN && nt.powered && nt.watered) entBonus += (nt.level === 1 ? 5 : (nt.level === 2 ? 10 : 20));
+                            }
+                        }
+                        if (!hasForest) totalForestPen += 10;
+                        totalNimbyPen += nimbyPen; totalEntBonus += Math.min(20, entBonus);
+                        t.hasNimby = nimbyPen > 0; // For inspector
+                    }
+                }
                 
-                let avgEntHappy = totalResTiles > 0 ? totalEntScore / totalResTiles : 0;
-                let avgForestHappy = totalResTiles > 0 ? totalForestScore / totalResTiles : 0;
-                let avgPollution = totalResTiles > 0 ? totalPollutionScore / totalResTiles : 0;
-                let avgHeavyInd = totalResTiles > 0 ? totalHeavyIndScore / totalResTiles : 0;
-                
-                let hap = 0 + jobHappy + powerHappy + waterHappy + avgEntHappy + avgForestHappy + avgPollution + avgHeavyInd;
+                if (totalRes > 0) {
+                    hap -= (totalForestPen / totalRes);
+                    hap -= (totalNimbyPen / totalRes);
+                    hap += (totalEntBonus / totalRes);
+                }
+
                 gameState.happiness = Math.max(0, Math.min(100, Math.round(hap)));
             }
             document.getElementById('demand-r').style.width = `${gameState.demand.R}%`; document.getElementById('demand-c').style.width = `${gameState.demand.C}%`; document.getElementById('demand-i').style.width = `${gameState.demand.I}%`;
         }
 
         function simulateGrowth() {
-            let built = false; let entertains = [];
-            for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { let t = gameState.grid[y][x]; if (t.type === TYPES.ENTERTAIN && t.powered && t.watered && t.level > 0) entertains.push({x, y}); }
-
+            let built = false;
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
-                    let t = gameState.grid[y][x]; if (t.isZoned && t.level > 0) t.age++;
+                    let t = gameState.grid[y][x];
+                    if (t.isZoned && t.level > 0) t.age++;
 
                     if (t.isZoned && t.powered && t.watered && hasRoadAccess(x, y)) {
                         let d = gameState.demand[t.type.charAt(0)];
                         
-                        if (t.type === TYPES.RESIDENTIAL && t.level === 0 && d > 15) {
-                            let nearEntertain = entertains.some(e => Math.abs(e.x - x) <= 10 && Math.abs(e.y - y) <= 10);
-                            let nearCI = false;
-                            if (!nearEntertain) {
-                                for(let dy=-20; dy<=20; dy++) for(let dx=-20; dx<=20; dx++) {
-                                    let nx=x+dx, ny=y+dy;
-                                    if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT) { let nt = gameState.grid[ny][nx]; if ((nt.type === TYPES.COMMERCIAL || nt.type === TYPES.INDUSTRIAL) && nt.level > 0 && nt.powered && nt.watered) { nearCI = true; break; } }
+                        if (t.type === TYPES.RESIDENTIAL && t.level === 0) {
+                            let nearCI = false; let nearEnt = false;
+                            for(let dy=-20; dy<=20; dy++) for(let dx=-20; dx<=20; dx++) {
+                                let nx=x+dx, ny=y+dy;
+                                if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT) {
+                                    let nt = gameState.grid[ny][nx]; let dist = Math.abs(dx) + Math.abs(dy);
+                                    if ((nt.type === TYPES.COMMERCIAL || nt.type === TYPES.INDUSTRIAL) && nt.level > 0 && nt.powered && nt.watered) nearCI = true;
+                                    if (dist <= 10 && nt.type === TYPES.ENTERTAIN && nt.powered && nt.watered) nearEnt = true;
                                 }
                             }
-                            if(nearEntertain || (nearCI && Math.random() < d / 100)) { t.level = 1; t.density = 10; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#ddd', 15); if (nearEntertain) createFloatingText("🎉 핫플 효과!", x*TILE_SIZE, y*TILE_SIZE, '#fb7185'); built = true; }
+                            if(nearEnt || (nearCI && d > 15 && Math.random() < d / 100)) { 
+                                t.level = 1; t.density = 10; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#ddd', 15); built = true; 
+                                if(nearEnt) createFloatingText("🎉 핫플레이스!", x*TILE_SIZE, y*TILE_SIZE, '#f472b6');
+                            }
                         }
-                        
-                        if ((t.type === TYPES.COMMERCIAL || t.type === TYPES.INDUSTRIAL) && t.level === 0 && d > 15) {
+                        else if ((t.type === TYPES.COMMERCIAL || t.type === TYPES.INDUSTRIAL) && t.level === 0 && d > 15) {
                             if (Math.random() < d / 100) { t.level = 1; t.density = 10; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#ddd', 15); built = true; }
                         }
 
                         if ((t.type === TYPES.COMMERCIAL || t.type === TYPES.INDUSTRIAL) && t.level > 0 && t.level < 4) {
-                            let req = t.level === 1 ? 10 : (t.level === 2 ? 30 : 60);
-                            if (t.type === TYPES.COMMERCIAL) req = t.level === 1 ? 20 : (t.level === 2 ? 60 : 120);
-                            if (t.carArrivals >= req) { t.level++; t.density = t.level * 10; t.carArrivals = 0; createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#facc15', 20); built = true; }
+                            let req = t.level === 1 ? 20 : (t.level === 2 ? 60 : 120);
+                            if (t.carArrivals >= req) {
+                                t.level++; t.density = t.level * 10; t.carArrivals = 0;
+                                createParticles(x*TILE_SIZE+20, y*TILE_SIZE+20, '#facc15', 20); built = true;
+                            }
                         }
                     }
                 }
             }
-            if (built) { calculatePopulation(); updatePowerGrid(); updateWaterGrid(); updateDemands(); }
+            if (built) { calculatePopulation(); updatePowerGrid(); updateWaterGrid(); }
         }
 
-        function hasRoadAccess(x, y) { for(let d of DIRS) { let nx = x + d[0], ny = y + d[1]; if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT && gameState.grid[ny][nx].type === TYPES.ROAD) return true; } return false; }
+        function hasRoadAccess(x, y) { for(let d of DIRS) { let nx = x + d[0], ny = y + d[1]; if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT && (gameState.grid[ny][nx].type === TYPES.ROAD || gameState.grid[ny][nx].type === TYPES.BRIDGE)) return true; } return false; }
 
         function calculateEconomy() {
             let upkeep = 0; let tax = 0;
@@ -576,9 +590,10 @@
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     let t = gameState.grid[y][x];
                     if (t.type === TYPES.ROAD) upkeep += 1;
+                    if (t.type === TYPES.BRIDGE) upkeep += 2;
                     if (t.type === TYPES.POWER) upkeep += t.level === 2 ? 30 : 10;
                     if (t.type === TYPES.PUMP) upkeep += t.level === 2 ? 30 : 10;
-                    if (t.type === TYPES.ENTERTAIN && t.powered && t.watered) upkeep += (t.level === 1 ? 150 : (t.level === 2 ? 300 : 600));
+                    if (t.type === TYPES.ENTERTAIN && t.powered && t.watered) upkeep += t.level === 1 ? 150 : (t.level === 2 ? 300 : 600);
                     
                     if (t.powered && t.watered && t.level > 0) {
                         if (t.type === TYPES.RESIDENTIAL) { upkeep += t.level * 2; tax += t.level * 15; }
@@ -604,7 +619,7 @@
                 for(let d of DIRS) {
                     let nx = curr.x + d[0], ny = curr.y + d[1];
                     if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
-                        if (gameState.grid[ny][nx].type === TYPES.ROAD) {
+                        if (gameState.grid[ny][nx].type === TYPES.ROAD || gameState.grid[ny][nx].type === TYPES.BRIDGE) {
                             let k = `${nx},${ny}`; let cLvl = congestionMap.get(k) || 0;
                             let stepCost = 1; if (cLvl >= 3) stepCost = 15; else if (cLvl >= 2) stepCost = 4;
                             let newCost = curr.cost + stepCost;
@@ -624,50 +639,26 @@
             for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
                 let dt = gameState.grid[y][x];
                 if (type === TYPES.RESIDENTIAL && (dt.type === TYPES.COMMERCIAL || dt.type === TYPES.INDUSTRIAL || dt.type === TYPES.ENTERTAIN) && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
-                if ((type === TYPES.COMMERCIAL || type === TYPES.INDUSTRIAL) && dt.type === TYPES.RESIDENTIAL && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
                 if (type === TYPES.ENTERTAIN && dt.type === TYPES.COMMERCIAL && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
+                if ((type === TYPES.COMMERCIAL || type === TYPES.INDUSTRIAL) && dt.type === TYPES.RESIDENTIAL && dt.level > 0 && dt.powered && dt.watered) dests.push({x, y});
             }
             if (dests.length === 0) return; let dest = dests[Math.floor(Math.random() * dests.length)];
 
             let startRoad = null, endRoad = null;
             for(let d of DIRS) {
-                if(!startRoad && gameState.grid[by+d[1]]?.[bx+d[0]]?.type === TYPES.ROAD) startRoad = {x: bx+d[0], y: by+d[1]};
-                if(!endRoad && gameState.grid[dest.y+d[1]]?.[dest.x+d[0]]?.type === TYPES.ROAD) endRoad = {x: dest.x+d[0], y: dest.y+d[1]};
+                if(!startRoad && (gameState.grid[by+d[1]]?.[bx+d[0]]?.type === TYPES.ROAD || gameState.grid[by+d[1]]?.[bx+d[0]]?.type === TYPES.BRIDGE)) startRoad = {x: bx+d[0], y: by+d[1]};
+                if(!endRoad && (gameState.grid[dest.y+d[1]]?.[dest.x+d[0]]?.type === TYPES.ROAD || gameState.grid[dest.y+d[1]]?.[dest.x+d[0]]?.type === TYPES.BRIDGE)) endRoad = {x: dest.x+d[0], y: dest.y+d[1]};
             }
 
             if (startRoad && endRoad) {
                 let path = findRoadPath(startRoad.x, startRoad.y, endRoad.x, endRoad.y);
                 if (path && path.length > 0) {
-                    let waypoints = []; let offsetAmt = TILE_SIZE * 0.25; 
-                    
-                    for (let i = 0; i < path.length; i++) {
-                        let cx = path[i].x * TILE_SIZE + TILE_SIZE / 2;
-                        let cy = path[i].y * TILE_SIZE + TILE_SIZE / 2;
-
-                        let dinX = 0, dinY = 0;
-                        if (i > 0) { dinX = path[i].x - path[i-1].x; dinY = path[i].y - path[i-1].y; } 
-                        else if (path.length > 1) { dinX = path[1].x - path[0].x; dinY = path[1].y - path[0].y; } 
-                        else { dinX = 1; dinY = 0; }
-                        let ninX = -dinY; let ninY = dinX;
-
-                        let doutX = 0, doutY = 0;
-                        if (i < path.length - 1) { doutX = path[i+1].x - path[i].x; doutY = path[i+1].y - path[i].y; } 
-                        else { doutX = dinX; doutY = dinY; }
-                        let noutX = -doutY; let noutY = doutX;
-
-                        let px, py;
-                        if (dinX === doutX && dinY === doutY) { px = cx + ninX * offsetAmt; py = cy + ninY * offsetAmt; }
-                        else { px = cx + (ninX + noutX) * offsetAmt; py = cy + (ninY + noutY) * offsetAmt; }
-                        waypoints.push({x: px, y: py, gridX: path[i].x, gridY: path[i].y});
-                    }
-
                     gameState.cars.push({
                         homeX: bx, homeY: by, destX: dest.x, destY: dest.y,
-                        x: waypoints[0].x, y: waypoints[0].y,
-                        path: path, waypoints: waypoints, pathIndex: 1,
+                        x: startRoad.x * TILE_SIZE + TILE_SIZE/2, y: startRoad.y * TILE_SIZE + TILE_SIZE/2,
+                        waypoints: path, pathIndex: 0,
                         baseSpeed: 1.0 + Math.random() * 0.5, currentSpeed: 0,
-                        angle: Math.atan2(waypoints.length > 1 ? waypoints[1].y - waypoints[0].y : 0, waypoints.length > 1 ? waypoints[1].x - waypoints[0].x : 1),
-                        stuckTimer: 0, ignoreCol: false,
+                        angle: 0, stuckTimer: 0, ignoreCol: false,
                         color: ['#ef4444', '#3b82f6', '#ffffff', '#eab308', '#22c55e'][Math.floor(Math.random()*5)]
                     });
                 }
@@ -675,46 +666,35 @@
         }
 
         function updateAnimations() {
-            for(let i = gameState.particles.length - 1; i >= 0; i--) { let p = gameState.particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) gameState.particles.splice(i, 1); }
-            
-            if (Math.random() < 0.2) { 
-                for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { 
-                    let t = gameState.grid[y][x]; 
-                    if ((t.isZoned || t.type === TYPES.ENTERTAIN) && t.level > 0 && t.powered && t.watered && Math.random() < 0.05) { 
-                        if (t.type === TYPES.RESIDENTIAL || t.type === TYPES.ENTERTAIN || (t.type !== TYPES.RESIDENTIAL && t.level >= 2)) {
-                            spawnCarForBuilding(x, y, t.type, t.level); 
-                        }
-                    } 
-                } 
+            for(let i = gameState.particles.length - 1; i >= 0; i--) {
+                let p = gameState.particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                if(p.life <= 0) gameState.particles.splice(i, 1);
             }
 
-            congestionMap.clear(); let carBoxes = gameState.cars.map((c, i) => ({ x: c.x, y: c.y, id: i }));
+            if (Math.random() < 0.2) {
+                for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x];
+                    if ((t.isZoned || t.type === TYPES.ENTERTAIN) && t.level > 0 && t.powered && t.watered && Math.random() < 0.05) {
+                        if (t.type === TYPES.RESIDENTIAL || t.type === TYPES.ENTERTAIN || ((t.type === TYPES.COMMERCIAL || t.type === TYPES.INDUSTRIAL) && t.level >= 2)) spawnCarForBuilding(x, y, t.type, t.level);
+                    }
+                }
+            }
+
+            congestionMap.clear();
+            let carBoxes = [];
 
             for(let i = gameState.cars.length - 1; i >= 0; i--) {
                 let car = gameState.cars[i];
-                
-                if (!car || !car.waypoints || !car.path) { gameState.cars.splice(i, 1); continue; }
-
-                if (car.pathIndex >= car.waypoints.length) { 
-                    let dt = gameState.grid[car.destY][car.destX]; 
-                    let homeTile = gameState.grid[car.homeY][car.homeX];
-                    let isFromCI = homeTile && (homeTile.type === TYPES.COMMERCIAL || homeTile.type === TYPES.INDUSTRIAL);
-                    let isFromEnt = homeTile && homeTile.type === TYPES.ENTERTAIN;
-                    let isFromRes = homeTile && homeTile.type === TYPES.RESIDENTIAL;
-
+                if (!car.waypoints || car.pathIndex >= car.waypoints.length) { 
+                    let dt = gameState.grid[car.destY]?.[car.destX]; 
                     if (dt && dt.level > 0 && dt.powered && dt.watered) {
-                        let earned = 0;
-                        if (isFromRes && (dt.type === TYPES.COMMERCIAL || dt.type === TYPES.INDUSTRIAL)) {
-                            if (dt.type === TYPES.COMMERCIAL) earned = [0, 2, 4, 6, 8][dt.level] || 8;
-                            if (dt.type === TYPES.INDUSTRIAL) earned = [0, 15, 35, 70, 120][dt.level] || 120;
-                            dt.carArrivals = (dt.carArrivals || 0) + 1;
-                        } else if (isFromRes && dt.type === TYPES.ENTERTAIN) {
-                            earned = dt.level * 15; 
-                        } else if (isFromCI && dt.type === TYPES.RESIDENTIAL) {
-                            earned = 0; 
-                        } else if (isFromEnt && dt.type === TYPES.COMMERCIAL) {
-                            earned = dt.level * 3; 
-                            dt.carArrivals = (dt.carArrivals || 0) + 1;
+                        let earned = 0; let ht = gameState.grid[car.homeY]?.[car.homeX];
+                        if (ht && ht.type === TYPES.RESIDENTIAL) {
+                            if (dt.type === TYPES.COMMERCIAL) { earned = [0, 2, 4, 6, 8][dt.level] || 8; dt.carArrivals = (dt.carArrivals || 0) + 1; }
+                            if (dt.type === TYPES.INDUSTRIAL) { earned = [0, 15, 35, 70, 120][dt.level] || 120; dt.carArrivals = (dt.carArrivals || 0) + 1; }
+                            if (dt.type === TYPES.ENTERTAIN) { earned = [0, 15, 30, 45][dt.level] || 45; }
+                        } else if (ht && ht.type === TYPES.ENTERTAIN && dt.type === TYPES.COMMERCIAL) {
+                            earned = [0, 8, 16, 24, 32][dt.level] || 32; dt.carArrivals = (dt.carArrivals || 0) + 1;
                         }
                         
                         if (earned > 0) { gameState.money += earned; gameState.monthlyRevenue = (gameState.monthlyRevenue || 0) + earned; createFloatingText(`+$${earned}`, car.x, car.y - 10, '#4ade80'); updateHUD(); }
@@ -722,37 +702,49 @@
                     gameState.cars.splice(i, 1); continue; 
                 }
 
-                let targetWP = car.waypoints[car.pathIndex];
+                let targetGrid = car.waypoints[car.pathIndex];
                 let currentGridX = Math.floor(car.x / TILE_SIZE); let currentGridY = Math.floor(car.y / TILE_SIZE);
                 let k = `${currentGridX},${currentGridY}`; congestionMap.set(k, (congestionMap.get(k) || 0) + 1);
 
-                let dx = targetWP.x - car.x; let dy = targetWP.y - car.y; let dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < car.currentSpeed) { car.x = targetWP.x; car.y = targetWP.y; car.pathIndex++; continue; }
+                let dirX = targetGrid.x - currentGridX; let dirY = targetGrid.y - currentGridY;
+                if (dirX === 0 && dirY === 0 && car.pathIndex < car.waypoints.length - 1) { let nextG = car.waypoints[car.pathIndex+1]; dirX = nextG.x - currentGridX; dirY = nextG.y - currentGridY; }
+                if (dirX === 0 && dirY === 0) { dirX = Math.cos(car.angle); dirY = Math.sin(car.angle); }
 
+                let targetAngle = Math.atan2(dirY, dirX);
+                car.angle = lerpAngle(car.angle, targetAngle, 0.1);
+
+                let rightX = -dirY, rightY = dirX;
+                let len = Math.sqrt(rightX*rightX + rightY*rightY) || 1; rightX /= len; rightY /= len;
+                let targetPX = targetGrid.x * TILE_SIZE + TILE_SIZE/2 + rightX * (TILE_SIZE * 0.2);
+                let targetPY = targetGrid.y * TILE_SIZE + TILE_SIZE/2 + rightY * (TILE_SIZE * 0.2);
+
+                let dx = targetPX - car.x; let dy = targetPY - car.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 let vxNorm = dx / (dist || 1); let vyNorm = dy / (dist || 1);
-                let targetAngle = Math.atan2(vyNorm, vxNorm); car.angle = lerpAngle(car.angle, targetAngle, 0.15);
 
-                let blocked = false; let rightX = -vyNorm, rightY = vxNorm; 
+                let blocked = false;
                 if (!car.ignoreCol) {
                     for (let j = 0; j < carBoxes.length; j++) {
-                        if (i === j) continue; let other = carBoxes[j]; let odx = other.x - car.x, ody = other.y - car.y; let odist = Math.sqrt(odx*odx + ody*ody);
-                        if (odist < 20) { let dot = (odx * vxNorm + ody * vyNorm) / (odist || 1); if (dot > 0.8) { blocked = true; break; } }
+                        let other = carBoxes[j]; let odx = other.x - car.x, ody = other.y - car.y; let odist = Math.sqrt(odx*odx + ody*ody);
+                        if (odist < 20) { let dot = (odx * vxNorm + ody * vyNorm) / (odist || 1); if (dot > 0.7) { blocked = true; break; } }
                     }
                 }
 
                 if (blocked) {
                     car.currentSpeed = Math.max(0, car.currentSpeed - 0.2); car.stuckTimer++;
-                    if (car.stuckTimer > 60) { 
-                        car.x += -rightX * 8; car.y += -rightY * 8; 
-                        car.currentSpeed = car.baseSpeed * 2.5; car.stuckTimer = 0; car.ignoreCol = true; 
-                        createFloatingText("💨", car.x, car.y, '#fff'); setTimeout(()=>{car.ignoreCol=false;}, 1000); 
-                    }
+                    if (car.stuckTimer > 60) { car.x += -rightX * 8; car.y += -rightY * 8; car.currentSpeed = car.baseSpeed * 2; car.stuckTimer = 0; car.ignoreCol = true; createFloatingText("💨", car.x, car.y, '#fff'); setTimeout(()=>{car.ignoreCol=false;}, 1000); }
                 } else { car.currentSpeed = Math.min(car.baseSpeed, car.currentSpeed + 0.1); car.stuckTimer = 0; }
 
-                car.x += vxNorm * car.currentSpeed; car.y += vyNorm * car.currentSpeed;
+                if (dist < car.currentSpeed) { car.x = targetPX; car.y = targetPY; car.pathIndex++; } 
+                else { car.x += vxNorm * car.currentSpeed; car.y += vyNorm * car.currentSpeed; }
+                
+                carBoxes.push({x: car.x, y: car.y});
             }
 
-            if (Math.random() < 0.3) { for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) { let t = gameState.grid[y][x]; if (t.type === TYPES.INDUSTRIAL && t.level > 1 && t.powered && t.watered) createParticles(x * TILE_SIZE + TILE_SIZE/2 + 5, y * TILE_SIZE - (t.level*10), 'rgba(200,200,200,0.5)', 1); } }
+            if (Math.random() < 0.3) {
+                for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
+                    let t = gameState.grid[y][x]; if (t.type === TYPES.INDUSTRIAL && t.level > 1 && t.powered && t.watered) createParticles(x * TILE_SIZE + TILE_SIZE/2 + 5, y * TILE_SIZE - (t.level*10), 'rgba(200,200,200,0.5)', 1);
+                }
+            }
         }
 
         function createParticles(x, y, color, count) { for(let i=0; i<count; i++) gameState.particles.push({ x: x+(Math.random()-0.5)*20, y: y+(Math.random()-0.5)*20, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2-1, life: 1.0, color: color, size: Math.random()*3+1 }); }
@@ -792,14 +784,7 @@
 
         function drawPower(ctx, x, y, size, level) { const d = 10; drawBuildingBox(ctx, x+2, y-2, size-4, d, 20 + level*5, '#9ca3af', '#d1d5db', '#4b5563', '#1f2937'); ctx.fillStyle='#6b7280'; ctx.beginPath(); ctx.moveTo(x+5, y-25); ctx.quadraticCurveTo(x+15, y-50, x+25, y-25); ctx.lineTo(x+25+d/2, y-25-d/2); ctx.quadraticCurveTo(x+15+d/2, y-50-d/2, x+5+d/2, y-25-d/2); ctx.fill(); ctx.fillStyle='#4b5563'; ctx.beginPath(); ctx.ellipse(x+15+d/4, y-50-d/4, 10, 3, Math.PI/4, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#ef4444'; ctx.fillRect(x+15, y-15, 10, 5); }
         function drawPump(ctx, x, y, size, level) { const d = 8; drawBuildingBox(ctx, x+4, y-4, size-8, d, 15 + level*5, '#cbd5e1', '#e2e8f0', '#64748b', '#0ea5e9'); ctx.fillStyle='#38bdf8'; ctx.beginPath(); ctx.arc(x+size/2, y-25, 6, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#0284c7'; ctx.fillRect(x+size/2-2, y-15, 4, 15); }
-        function drawEntertain(ctx, x, y, size, level) { 
-            const d = 8; drawBuildingBox(ctx, x+2, y-2, size-4, d, 10 + level*5, '#fecdd3', '#ffe4e6', '#fb7185', '#be123c'); 
-            ctx.strokeStyle='#fb7185'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x+size/2+d/2, y-25-d/2, 15, 0, Math.PI*2); ctx.stroke(); 
-            ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(x+size/2+d/2, y-25-d/2, 3, 0, Math.PI*2); ctx.fill(); 
-            for(let i=0;i<8;i++){ let a=i*Math.PI/4 + Date.now()/1000; ctx.fillStyle=['#ef4444','#3b82f6','#22c55e'][i%3]; ctx.fillRect(x+size/2+d/2+Math.cos(a)*15-2, y-25-d/2+Math.sin(a)*15-2, 4, 4); }
-            if (level >= 2) { ctx.fillStyle = '#6366f1'; ctx.fillRect(x+5, y-40, 4, 30); let dropY = y - 40 + (Math.sin(Date.now()/500) + 1)/2 * 20; ctx.fillStyle = '#f59e0b'; ctx.fillRect(x+3, dropY, 8, 4); }
-            if (level >= 3) { ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x+size-5, y-10); ctx.quadraticCurveTo(x+size-10, y-30, x+size-20, y-15); ctx.stroke(); }
-        }
+        function drawEntertain(ctx, x, y, size, level) { const d = 8; drawBuildingBox(ctx, x+2, y-2, size-4, d, 10, '#fecdd3', '#ffe4e6', '#fb7185', '#be123c'); ctx.strokeStyle='#fb7185'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x+size/2+d/2, y-25-d/2, 10+level*5, 0, Math.PI*2); ctx.stroke(); ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(x+size/2+d/2, y-25-d/2, 3, 0, Math.PI*2); ctx.fill(); for(let i=0;i<8;i++){ let a=i*Math.PI/4; ctx.fillStyle=['#ef4444','#3b82f6','#22c55e'][i%3]; ctx.fillRect(x+size/2+d/2+Math.cos(a)*(10+level*5)-2, y-25-d/2+Math.sin(a)*(10+level*5)-2, 4, 4); } }
 
         function draw() {
             CTX.fillStyle = '#0f172a'; CTX.fillRect(0, 0, CANVAS.width, CANVAS.height); CTX.save(); CTX.translate(-gameState.camera.x * gameState.camera.zoom, -gameState.camera.y * gameState.camera.zoom); CTX.scale(gameState.camera.zoom, gameState.camera.zoom);
@@ -813,19 +798,29 @@
             for(let y=sRow; y<eRow; y++) for(let x=sCol; x<eCol; x++) {
                 if(y<0||y>=GRID_HEIGHT||x<0||x>=GRID_WIDTH) continue;
                 let t = gameState.grid[y][x], px = x*TILE_SIZE, py = y*TILE_SIZE;
-                if(t.type === TYPES.WATER) { CTX.fillStyle='#3b82f6'; CTX.fillRect(px, py, TILE_SIZE, TILE_SIZE); CTX.fillStyle='rgba(255,255,255,0.2)'; CTX.fillRect(px+5, py+10, 10, 2); CTX.fillRect(px+20, py+25, 15, 2); }
+                if(t.type === TYPES.WATER || t.type === TYPES.BRIDGE) { CTX.fillStyle='#3b82f6'; CTX.fillRect(px, py, TILE_SIZE, TILE_SIZE); CTX.fillStyle='rgba(255,255,255,0.2)'; CTX.fillRect(px+5, py+10, 10, 2); CTX.fillRect(px+20, py+25, 15, 2); }
             }
             if (gameState.showPipes) { gameState.pipes.forEach(p => { let px1 = p.x1*TILE_SIZE+TILE_SIZE/2, py1 = p.y1*TILE_SIZE+TILE_SIZE/2, px2 = p.x2*TILE_SIZE+TILE_SIZE/2, py2 = p.y2*TILE_SIZE+TILE_SIZE/2; CTX.strokeStyle='#0ea5e9'; CTX.lineWidth=4; CTX.beginPath(); CTX.moveTo(px1, py1); CTX.lineTo(px2, py2); CTX.stroke(); CTX.fillStyle='#0284c7'; CTX.beginPath(); CTX.arc(px1, py1, 4, 0, Math.PI*2); CTX.fill(); CTX.beginPath(); CTX.arc(px2, py2, 4, 0, Math.PI*2); CTX.fill(); }); }
 
             for(let y=sRow; y<eRow; y++) for(let x=sCol; x<eCol; x++) {
                 if(y<0||y>=GRID_HEIGHT||x<0||x>=GRID_WIDTH) continue;
                 let t = gameState.grid[y][x], px = x*TILE_SIZE, py = y*TILE_SIZE;
-                if (t.type === TYPES.ROAD) {
-                    let c = congestionMap.get(`${x},${y}`) || 0; CTX.fillStyle = c >= 3 ? '#ef4444' : (c >= 2 ? '#fb923c' : '#4b5563'); CTX.fillRect(px+1, py+1, TILE_SIZE-2, TILE_SIZE-2);
+                if (t.type === TYPES.ROAD || t.type === TYPES.BRIDGE) {
+                    let isBridge = t.type === TYPES.BRIDGE;
+                    let c = congestionMap.get(`${x},${y}`) || 0; CTX.fillStyle = c >= 3 ? '#ef4444' : (c >= 2 ? '#fb923c' : (isBridge ? '#52525b' : '#4b5563')); 
+                    if (isBridge) CTX.fillRect(px+2, py+2, TILE_SIZE-4, TILE_SIZE-4); else CTX.fillRect(px+1, py+1, TILE_SIZE-2, TILE_SIZE-2);
+                    
                     CTX.strokeStyle = '#fbbf24'; CTX.setLineDash([5, 5]); CTX.beginPath();
-                    let hN = y>0&&gameState.grid[y-1][x].type===TYPES.ROAD, hS = y<GRID_HEIGHT-1&&gameState.grid[y+1][x].type===TYPES.ROAD, hE = x<GRID_WIDTH-1&&gameState.grid[y][x+1].type===TYPES.ROAD, hW = x>0&&gameState.grid[y][x-1].type===TYPES.ROAD;
+                    let hN = y>0&&[TYPES.ROAD, TYPES.BRIDGE].includes(gameState.grid[y-1][x].type), hS = y<GRID_HEIGHT-1&&[TYPES.ROAD, TYPES.BRIDGE].includes(gameState.grid[y+1][x].type), hE = x<GRID_WIDTH-1&&[TYPES.ROAD, TYPES.BRIDGE].includes(gameState.grid[y][x+1].type), hW = x>0&&[TYPES.ROAD, TYPES.BRIDGE].includes(gameState.grid[y][x-1].type);
                     if(hN) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px+TILE_SIZE/2, py); } if(hS) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px+TILE_SIZE/2, py+TILE_SIZE); } if(hE) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px+TILE_SIZE, py+TILE_SIZE/2); } if(hW) { CTX.moveTo(px+TILE_SIZE/2, py+TILE_SIZE/2); CTX.lineTo(px, py+TILE_SIZE/2); }
                     if(!hN&&!hS&&!hE&&!hW) { CTX.fillStyle='#fbbf24'; CTX.fillRect(px+TILE_SIZE/2-2, py+TILE_SIZE/2-2, 4, 4); } CTX.stroke(); CTX.setLineDash([]);
+
+                    if (isBridge) {
+                        CTX.fillStyle = '#a1a1aa';
+                        if (hN || hS) { CTX.fillRect(px, py, 4, TILE_SIZE); CTX.fillRect(px+TILE_SIZE-4, py, 4, TILE_SIZE); }
+                        else if (hE || hW) { CTX.fillRect(px, py, TILE_SIZE, 4); CTX.fillRect(px, py+TILE_SIZE-4, TILE_SIZE, 4); }
+                        else { CTX.fillRect(px, py, 4, TILE_SIZE); CTX.fillRect(px+TILE_SIZE-4, py, 4, TILE_SIZE); }
+                    }
                 } 
                 else if (t.isZoned || t.powerSource || t.waterSource || t.type === TYPES.ENTERTAIN) {
                     CTX.fillStyle = '#6b7280'; CTX.fillRect(px+2, py+2, TILE_SIZE-4, TILE_SIZE-4);
@@ -884,44 +879,26 @@
         function showInspector(x, y, cx, cy) {
             const t = gameState.grid[y][x]; const p = document.getElementById('inspector-panel'); const wBox = document.getElementById('insp-warnings'); const upBtn = document.getElementById('insp-upgrade');
             let n = "빈 땅";
-            if(t.type !== TYPES.EMPTY) { if(t.type===TYPES.ROAD)n="도로"; else if(t.type===TYPES.RESIDENTIAL)n="주거 구역"; else if(t.type===TYPES.COMMERCIAL)n="상업 구역"; else if(t.type===TYPES.INDUSTRIAL)n="공업 구역"; else if(t.type===TYPES.POWER)n="발전소"; else if(t.type===TYPES.WATER)n="저수지"; else if(t.type===TYPES.PUMP)n="정수장"; else if(t.type===TYPES.ENTERTAIN)n="오락 시설"; else if(t.type===TYPES.FOREST)n="숲"; } else if(t.hasTree) n="자연 숲";
+            if(t.type !== TYPES.EMPTY) { if(t.type===TYPES.ROAD)n="도로"; else if(t.type===TYPES.BRIDGE)n="다리"; else if(t.type===TYPES.RESIDENTIAL)n="주거 구역"; else if(t.type===TYPES.COMMERCIAL)n="상업 구역"; else if(t.type===TYPES.INDUSTRIAL)n="공업 구역"; else if(t.type===TYPES.POWER)n="발전소"; else if(t.type===TYPES.WATER)n="저수지"; else if(t.type===TYPES.PUMP)n="정수장"; else if(t.type===TYPES.ENTERTAIN)n="오락 시설"; else if(t.type===TYPES.FOREST)n="숲"; } else if(t.hasTree) n="자연 숲";
             document.getElementById('insp-title').innerText = n;
             document.getElementById('insp-power').innerText = t.powered ? "연결됨" : "끊김"; document.getElementById('insp-water').innerText = t.watered ? "연결됨" : "끊김";
             document.getElementById('insp-level').innerText = t.level > 0 ? `레벨 ${t.level}` : "-"; document.getElementById('insp-density').innerText = t.density > 0 ? t.density : "-";
             
             wBox.innerHTML = ''; wBox.classList.add('hidden');
-            let warningsHTML = '';
-            
             if (t.isZoned || t.type === TYPES.POWER || t.type === TYPES.PUMP || t.type === TYPES.ENTERTAIN) {
-                if(!t.powered) warningsHTML += `<div class="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs border border-red-500/50 flex items-center gap-1"><span>⚡</span> 전력망 연결 안됨</div>`;
-                if(!t.watered && t.type !== TYPES.POWER) warningsHTML += `<div class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs border border-blue-500/50 flex items-center gap-1"><span>💧</span> 수도망 연결 안됨</div>`;
+                if(!t.powered) { wBox.innerHTML += `<div class="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs border border-red-500/50 flex items-center gap-1"><span>⚡</span> 전력망 연결 안됨</div>`; wBox.classList.remove('hidden'); }
+                if(!t.watered && t.type !== TYPES.POWER) { wBox.innerHTML += `<div class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs border border-blue-500/50 flex items-center gap-1"><span>💧</span> 수도망 연결 안됨</div>`; wBox.classList.remove('hidden'); }
             }
-
-            if (t.type === TYPES.RESIDENTIAL && t.level > 0) {
-                let hasP = false, hasH = false;
-                for(let dy=-5; dy<=5; dy++) {
-                    for(let dx=-5; dx<=5; dx++) {
-                        let nx=x+dx, ny=y+dy;
-                        if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT) {
-                            let nt = gameState.grid[ny][nx];
-                            if ((nt.type === TYPES.POWER || nt.type === TYPES.PUMP) && nt.level > 0) hasP = true;
-                            if (nt.type === TYPES.INDUSTRIAL && nt.level >= 3) hasH = true;
-                        }
-                    }
-                }
-                if (hasP) warningsHTML += `<div class="bg-gray-500/20 text-gray-300 px-2 py-1 rounded text-[10px] border border-gray-500/50 flex items-center gap-1"><span>🏭</span> 혐오시설 인접 (행복도 -5%)</div>`;
-                if (hasH) warningsHTML += `<div class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-[10px] border border-yellow-500/50 flex items-center gap-1"><span>🏭</span> 공해 발생 (행복도 -10%)</div>`;
-            }
-
-            if (warningsHTML !== '') {
-                wBox.innerHTML = warningsHTML;
-                wBox.classList.remove('hidden');
-            }
+            if (t.hasNimby) { wBox.innerHTML += `<div class="bg-orange-500/20 text-orange-300 px-2 py-1 rounded text-xs border border-orange-500/50 flex items-center gap-1"><span>⚠️</span> 공해/혐오시설 인접</div>`; wBox.classList.remove('hidden'); }
 
             upBtn.classList.add('hidden'); upBtn.onclick = null;
-            if ((t.type === TYPES.POWER || t.type === TYPES.PUMP) && t.level === 1) {
-                upBtn.classList.remove('hidden');
-                upBtn.onclick = () => { if (spendMoney(COSTS.UPGRADE, cx, cy)) { t.level = 2; updatePowerGrid(); updateWaterGrid(); hideInspector(); showToast("인프라 업그레이드 완료!", "info"); } };
+            if ([(TYPES.POWER), (TYPES.PUMP), (TYPES.ENTERTAIN)].includes(t.type) && t.level < 3) {
+                if(t.type === TYPES.ENTERTAIN || t.level === 1) {
+                    let cost = (t.type === TYPES.ENTERTAIN) ? 500 : 1000;
+                    upBtn.innerText = `시설 업그레이드 ($${cost.toLocaleString()})`;
+                    upBtn.classList.remove('hidden');
+                    upBtn.onclick = () => { if (spendMoney(cost, cx, cy)) { t.level++; updatePowerGrid(); updateWaterGrid(); updateDemands(); hideInspector(); showToast("시설 업그레이드 완료!", "info"); } };
+                }
             }
 
             p.style.left = `${Math.min(cx+20, window.innerWidth-200)}px`; p.style.top = `${Math.min(cy+20, window.innerHeight-200)}px`; p.classList.remove('hidden');
